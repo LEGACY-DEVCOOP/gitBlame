@@ -1,0 +1,43 @@
+name: '🐞 버그 리포트'
+description: '버그가 발생했나요?'
+title: '[버그] '
+labels: '버그'
+body:
+  - type: textarea
+    attributes:
+      label: 🔍 문제 설명
+      description: 버그에 대한 설명을 작성해 주세요.
+      placeholder: 꼼꼼하게 적을수록 좋습니다!
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🛠️ 재현 방법
+      description: 버그가 발생한 재현 방법을 작성해 주세요.
+      placeholder: |
+        1. 환경 설정 방법
+        2. 재현을 위한 구체적 단계
+        3. 발생 시점(특정 조건/시간대 등)
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: ✅ 기대 동작
+      description: 정상 작동 시 기대되는 동작을 작성해 주세요.
+      placeholder: |
+        예) 검색어를 입력하면 해당 키워드를 포함한 분실물만 목록에 표시되어야 함
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📄 에러 메세지
+      description: 에러 메세지가 있다면 복붙해 주세요.
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: 📌 첨부 자료
+      description: 더 자세한 설명을 위한 자료를 첨부해 주세요.
+      placeholder: |
+        - 스크린샷 또는 동영상 첨부
