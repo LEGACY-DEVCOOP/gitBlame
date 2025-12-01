@@ -15,7 +15,6 @@ body:
       label: 💻 코드
       description: 관련 코드가 있다면 복붙해 주세요.
     validations:
-      required: false
   - type: textarea
     attributes:
       label: 🏄‍♂️ 참고 자료
