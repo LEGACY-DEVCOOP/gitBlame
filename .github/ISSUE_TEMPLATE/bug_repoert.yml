@@ -34,7 +34,6 @@ body:
       description: 에러 메세지가 있다면 복붙해 주세요.
       render: shell
     validations:
-      required: false
   - type: textarea
     attributes:
       label: 📌 첨부 자료
