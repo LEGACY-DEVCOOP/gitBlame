@@ -2,7 +2,7 @@ const color = {
   white: '#FFFFFF',
   black: '#000000',
 
-  primary: '#FF4403',
+  primary: '#F00201',
 
   lightgray: '#828991',
   darkgray: '#24292F',
