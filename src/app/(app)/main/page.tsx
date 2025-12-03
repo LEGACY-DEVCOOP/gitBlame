@@ -67,7 +67,7 @@ export default function MainPage() {
 
 const PageContainer = styled.div`
   width: 100%;
-  min-width: 100%s;
+  min-width: 100%;
   min-height: 100vh;
   background: ${color.black};
 `;
@@ -126,8 +126,4 @@ const RepositoryList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
 `;

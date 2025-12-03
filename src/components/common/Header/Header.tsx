@@ -36,6 +36,9 @@ const HeaderContainer = styled.header`
 
 const Logo = styled.div`
   display: flex;
+  background: none;
+  background: none;
+  padding: 0;
   align-items: center;
   gap: 0.75rem;
   cursor: pointer;
