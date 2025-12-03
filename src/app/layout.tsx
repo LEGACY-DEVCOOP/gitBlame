@@ -1,12 +1,13 @@
 export const metadata = {
   title: 'GITBLAME',
-  description: 'Next + Emotion',
 };
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="ko">
-      <body suppressHydrationWarning>{children}</body>
+      <body style={{ margin: 0, padding: 0, width: '100vw', height: '100vh' }}>
+        {children}
+      </body>
     </html>
   );
 };
