@@ -123,9 +123,9 @@ const BasketIcon = styled.span`
 `;
 
 const RepositoryList = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-  gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
