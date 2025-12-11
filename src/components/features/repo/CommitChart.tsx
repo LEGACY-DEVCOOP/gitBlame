@@ -10,15 +10,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+
 import color from '@/styles/color';
 import font from '@/styles/font';
-
-interface ContributorData {
-  name: string;
-  commits: number;
-  lines: number;
-  percentage: number;
-}
+import type { ContributorData } from '@/types/contributor';
 
 interface CommitChartProps {
   data: ContributorData[];
