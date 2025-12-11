@@ -4,11 +4,19 @@ import styled from '@emotion/styled';
 import Image from 'next/image';
 import color from '@/styles/color';
 import font from '@/styles/font';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const username = '문소정';
+
+  const isRepoDetailPage = pathname?.startsWith('/repo/');
+  const repoName = isRepoDetailPage
+    ? searchParams?.get('name') || 'Repository'
+    : null;
+
   return (
     <HeaderContainer>
       <Logo onClick={() => router.push('/main')}>
@@ -18,7 +26,7 @@ export default function Header() {
           width={40}
           height={40}
         />
-        <LogoText>GITBLAME</LogoText>
+        <LogoText>{isRepoDetailPage ? repoName : 'GITBLAME'}</LogoText>
       </Logo>
       <Username>@{username}</Username>
     </HeaderContainer>
