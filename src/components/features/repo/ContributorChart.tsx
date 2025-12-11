@@ -60,7 +60,6 @@ const ContributorWrapper = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   padding: 0.5rem 1rem;
   height: 100%;
   overflow: hidden;
@@ -70,17 +69,40 @@ const ContributorList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  height: 100%;
-  justify-content: center;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+
+  /* 커스텀 스크롤바 스타일 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${color.primary};
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #ff3333;
+  }
+
+  /* Firefox 스크롤바 스타일 */
+  scrollbar-width: thin;
+  scrollbar-color: ${color.primary} rgba(255, 255, 255, 0.1);
 `;
 
 const ContributorItem = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  min-height: 0;
-  flex-shrink: 1;
-  padding: 0.5rem 0;
+  flex-shrink: 0;
+  padding: 0.75rem 0;
+  min-height: 80px;
 `;
 
 const ContributorInfo = styled.div`
