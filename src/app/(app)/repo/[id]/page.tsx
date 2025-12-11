@@ -25,40 +25,56 @@ export default function RepoDetailPage() {
   };
 
   const contributorData = [
-    { id: '1', name: '김철수', commits: 120, lines: 3500, percentage: 35 },
-    { id: '2', name: '박영희', commits: 98, lines: 2800, percentage: 28 },
-    { id: '3', name: '이민수', commits: 76, lines: 2200, percentage: 22 },
-    { id: '4', name: '최지원', commits: 52, lines: 1500, percentage: 15 },
+    { id: '1', name: 'munsojeong', commits: 453, lines: 12840, percentage: 36 },
+    { id: '2', name: 'devjohn', commits: 287, lines: 8950, percentage: 23 },
+    { id: '3', name: 'codealice', commits: 198, lines: 6420, percentage: 16 },
+    { id: '4', name: 'techbob', commits: 156, lines: 4830, percentage: 12 },
+    { id: '5', name: 'reactsue', commits: 98, lines: 3210, percentage: 8 },
+    { id: '6', name: 'gitmaster', commits: 65, lines: 1750, percentage: 5 },
   ];
 
   const recentCommits = [
     {
       id: 1,
-      message: 'feat: 로그인 기능 구현',
-      author: '김철수',
-      date: '2024-06-15',
-      hash: 'a1b2c3d',
+      message: 'feat: implement user authentication with NextAuth.js',
+      author: 'munsojeong',
+      date: '2024-12-11',
+      hash: 'a7f3d2e',
     },
     {
       id: 2,
-      message: 'fix: 레이아웃 버그 수정',
-      author: '박영희',
-      date: '2024-06-14',
-      hash: 'e4f5g6h',
+      message: 'fix: resolve memory leak in chart component rendering',
+      author: 'devjohn',
+      date: '2024-12-10',
+      hash: 'b4e8c1f',
     },
     {
       id: 3,
-      message: 'refactor: API 모듈 리팩토링',
-      author: '이민수',
-      date: '2024-06-14',
-      hash: 'i7j8k9l',
+      message: 'refactor: migrate from REST API to GraphQL endpoints',
+      author: 'codealice',
+      date: '2024-12-10',
+      hash: 'c9a5f7d',
     },
     {
       id: 4,
-      message: 'style: 코드 스타일 정리',
-      author: '최지원',
-      date: '2024-06-13',
-      hash: 'm0n1o2p',
+      message: 'style: update design system with new color tokens',
+      author: 'techbob',
+      date: '2024-12-09',
+      hash: 'd2c8e4b',
+    },
+    {
+      id: 5,
+      message: 'docs: add comprehensive API documentation',
+      author: 'reactsue',
+      date: '2024-12-09',
+      hash: 'e6f1a9c',
+    },
+    {
+      id: 6,
+      message: 'perf: optimize bundle size by implementing code splitting',
+      author: 'gitmaster',
+      date: '2024-12-08',
+      hash: 'f3d7b2a',
     },
   ];
 
@@ -76,19 +92,19 @@ export default function RepoDetailPage() {
           <RepoStats>
             <StatItem>
               <StatLabel>Stars</StatLabel>
-              <StatValue>128</StatValue>
+              <StatValue>2.1k</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Forks</StatLabel>
-              <StatValue>24</StatValue>
+              <StatValue>387</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Contributors</StatLabel>
-              <StatValue>4</StatValue>
+              <StatValue>12</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Total Commits</StatLabel>
-              <StatValue>346</StatValue>
+              <StatValue>1,247</StatValue>
             </StatItem>
           </RepoStats>
         </HeaderSection>
