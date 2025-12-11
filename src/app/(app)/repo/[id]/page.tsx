@@ -17,14 +17,18 @@ export default function RepoDetailPage() {
   const repoId = params?.id;
 
   const handleJudgeClick = () => {
+    if (!repoId) {
+      console.error('Repository ID is missing');
+      return;
+    }
     router.push(`/court?repo=${repoId}&name=${encodeURIComponent(repoName)}`);
   };
 
   const contributorData = [
-    { name: '김철수', commits: 120, lines: 3500, percentage: 35 },
-    { name: '박영희', commits: 98, lines: 2800, percentage: 28 },
-    { name: '이민수', commits: 76, lines: 2200, percentage: 22 },
-    { name: '최지원', commits: 52, lines: 1500, percentage: 15 },
+    { id: '1', name: '김철수', commits: 120, lines: 3500, percentage: 35 },
+    { id: '2', name: '박영희', commits: 98, lines: 2800, percentage: 28 },
+    { id: '3', name: '이민수', commits: 76, lines: 2200, percentage: 22 },
+    { id: '4', name: '최지원', commits: 52, lines: 1500, percentage: 15 },
   ];
 
   const recentCommits = [
