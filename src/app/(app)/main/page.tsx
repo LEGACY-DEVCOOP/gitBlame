@@ -53,6 +53,7 @@ export default function MainPage() {
           {repositories.map((repo) => (
             <RepositoryCard
               key={repo.id}
+              id={repo.id}
               repoName={repo.repoName}
               stars={repo.stars}
               forks={repo.forks}
@@ -116,10 +117,6 @@ const JudgeButton = styled.button`
   &:active {
     transform: translateY(0);
   }
-`;
-
-const BasketIcon = styled.span`
-  font-size: 1.5rem;
 `;
 
 const RepositoryList = styled.div`
