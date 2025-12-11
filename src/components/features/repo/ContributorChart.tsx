@@ -1,15 +1,10 @@
 'use client';
 
 import styled from '@emotion/styled';
+
 import color from '@/styles/color';
 import font from '@/styles/font';
-
-interface ContributorData {
-  name: string;
-  commits: number;
-  lines: number;
-  percentage: number;
-}
+import type { ContributorData } from '@/types/contributor';
 
 interface ContributorChartProps {
   data: ContributorData[];
@@ -22,7 +17,7 @@ export default function ContributorChart({ data }: ContributorChartProps) {
       <ContributorWrapper>
         <ContributorList>
           {data.map((contributor) => (
-            <ContributorItem key={contributor.name}>
+            <ContributorItem key={contributor.id}>
               <ContributorInfo>
                 <ContributorName>{contributor.name}</ContributorName>
                 <ContributorPercentage>
