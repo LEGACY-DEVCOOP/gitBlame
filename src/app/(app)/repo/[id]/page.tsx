@@ -8,6 +8,11 @@ import Courthouse from '../../../../../public/assets/Courthouse';
 import CommitChart from '@/components/features/repo/CommitChart';
 import ContributorChart from '@/components/features/repo/ContributorChart';
 import RecentCommits from '@/components/features/repo/RecentCommits';
+import {
+  mockRepoStats,
+  mockContributorData,
+  mockRecentCommits,
+} from '@/mocks/repoData';
 
 export default function RepoDetailPage() {
   const params = useParams();
@@ -24,60 +29,6 @@ export default function RepoDetailPage() {
     router.push(`/court?repo=${repoId}&name=${encodeURIComponent(repoName)}`);
   };
 
-  const contributorData = [
-    { id: '1', name: 'munsojeong', commits: 453, lines: 12840, percentage: 36 },
-    { id: '2', name: 'devjohn', commits: 287, lines: 8950, percentage: 23 },
-    { id: '3', name: 'codealice', commits: 198, lines: 6420, percentage: 16 },
-    { id: '4', name: 'techbob', commits: 156, lines: 4830, percentage: 12 },
-    { id: '5', name: 'reactsue', commits: 98, lines: 3210, percentage: 8 },
-    { id: '6', name: 'gitmaster', commits: 65, lines: 1750, percentage: 5 },
-  ];
-
-  const recentCommits = [
-    {
-      id: 1,
-      message: 'feat: implement user authentication with NextAuth.js',
-      author: 'munsojeong',
-      date: '2024-12-11',
-      hash: 'a7f3d2e',
-    },
-    {
-      id: 2,
-      message: 'fix: resolve memory leak in chart component rendering',
-      author: 'devjohn',
-      date: '2024-12-10',
-      hash: 'b4e8c1f',
-    },
-    {
-      id: 3,
-      message: 'refactor: migrate from REST API to GraphQL endpoints',
-      author: 'codealice',
-      date: '2024-12-10',
-      hash: 'c9a5f7d',
-    },
-    {
-      id: 4,
-      message: 'style: update design system with new color tokens',
-      author: 'techbob',
-      date: '2024-12-09',
-      hash: 'd2c8e4b',
-    },
-    {
-      id: 5,
-      message: 'docs: add comprehensive API documentation',
-      author: 'reactsue',
-      date: '2024-12-09',
-      hash: 'e6f1a9c',
-    },
-    {
-      id: 6,
-      message: 'perf: optimize bundle size by implementing code splitting',
-      author: 'gitmaster',
-      date: '2024-12-08',
-      hash: 'f3d7b2a',
-    },
-  ];
-
   return (
     <PageContainer>
       <MainContent>
@@ -92,29 +43,29 @@ export default function RepoDetailPage() {
           <RepoStats>
             <StatItem>
               <StatLabel>Stars</StatLabel>
-              <StatValue>2.1k</StatValue>
+              <StatValue>{mockRepoStats.stars}</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Forks</StatLabel>
-              <StatValue>387</StatValue>
+              <StatValue>{mockRepoStats.forks}</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Contributors</StatLabel>
-              <StatValue>12</StatValue>
+              <StatValue>{mockRepoStats.contributors}</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Total Commits</StatLabel>
-              <StatValue>1,247</StatValue>
+              <StatValue>{mockRepoStats.totalCommits}</StatValue>
             </StatItem>
           </RepoStats>
         </HeaderSection>
 
         <ChartsGrid>
-          <CommitChart data={contributorData} />
-          <ContributorChart data={contributorData} />
+          <CommitChart data={mockContributorData} />
+          <ContributorChart data={mockContributorData} />
         </ChartsGrid>
 
-        <RecentCommits commits={recentCommits} />
+        <RecentCommits commits={mockRecentCommits} />
       </MainContent>
     </PageContainer>
   );
