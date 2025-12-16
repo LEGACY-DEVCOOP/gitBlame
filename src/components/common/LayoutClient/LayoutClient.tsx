@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import styled from '@emotion/styled';
 import GlobalStyle from '@/styles/global';
 import Header from '@/components/common/Header/Header';
@@ -13,7 +14,11 @@ const LayoutClient = ({ children }: LayoutClientProps) => {
     <>
       <GlobalStyle />
       <Body>
-        <Header />
+        <Suspense
+          fallback={<div style={{ height: '88px', background: '#000' }} />}
+        >
+          <Header />
+        </Suspense>
         <Main>{children}</Main>
       </Body>
     </>
