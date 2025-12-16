@@ -145,9 +145,9 @@ const ProgressBarBackground = styled.div`
   position: absolute;
   width: 100%;
   height: 8px;
-  background-color: #333;
+  background-color: ${color.gray2};
   border-radius: 4px;
-  border: 1px solid #555;
+  border: 1px solid ${color.gray4};
 `;
 
 const ProgressBarFill = styled.div<{ percentage: number }>`
@@ -162,6 +162,6 @@ const ProgressBarFill = styled.div<{ percentage: number }>`
   ${(props) =>
     props.percentage > 0 &&
     `
-    box-shadow: 0 0 10px rgba(240, 2, 1, 0.5);
+    box-shadow: 0 0 10px rgba(${color.primaryRGB}, 0.5);
   `}
 `;

@@ -29,7 +29,7 @@ const StyledInput = styled.input<{ $fullWidth: boolean }>`
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
   padding: 18px 20px;
   background: ${color.black};
-  border: 1px solid #3a3a3a;
+  border: 1px solid ${color.gray3};
   border-radius: 12px;
   color: ${color.white};
   outline: none;
@@ -41,18 +41,18 @@ const StyledInput = styled.input<{ $fullWidth: boolean }>`
 
   &:focus {
     border-color: ${color.primary};
-    box-shadow: 0 0 0 2px rgba(240, 2, 1, 0.1);
+    box-shadow: 0 0 0 2px rgba(${color.primaryRGB}, 0.1);
   }
 
   &:read-only,
   &:disabled {
-    background-color: #1a1a1a;
+    background-color: ${color.gray1};
     cursor: default;
     color: ${color.lightgray};
-    border-color: #333;
+    border-color: ${color.gray2};
 
     &:focus {
-      border-color: #333;
+      border-color: ${color.gray2};
       box-shadow: none;
     }
   }
@@ -63,7 +63,7 @@ const StyledTextarea = styled.textarea<{ $fullWidth: boolean }>`
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
   padding: 18px 20px;
   background: ${color.black};
-  border: 1px solid #3a3a3a;
+  border: 1px solid ${color.gray3};
   border-radius: 12px;
   color: ${color.white};
   outline: none;
@@ -78,6 +78,6 @@ const StyledTextarea = styled.textarea<{ $fullWidth: boolean }>`
 
   &:focus {
     border-color: ${color.primary};
-    box-shadow: 0 0 0 2px rgba(240, 2, 1, 0.1);
+    box-shadow: 0 0 0 2px rgba(${color.primaryRGB}, 0.1);
   }
 `;

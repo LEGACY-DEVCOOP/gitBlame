@@ -110,7 +110,7 @@ const FormCard = styled.div`
   background-color: ${color.darkgray};
   border-radius: 16px;
   padding: 40px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid ${color.gray3};
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 `;
 

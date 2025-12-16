@@ -79,11 +79,11 @@ const ItemContainer = styled.div<{ $isSelected: boolean }>`
   transition: background-color 0.2s;
   color: ${color.white};
   background-color: ${({ $isSelected }) =>
-    $isSelected ? 'rgba(240, 2, 1, 0.2)' : 'transparent'};
+    $isSelected ? `rgba(${color.primaryRGB}, 0.2)` : 'transparent'};
 
   &:hover {
     background-color: ${({ $isSelected }) =>
-      $isSelected ? 'rgba(240, 2, 1, 0.2)' : '#3a3a3a'};
+      $isSelected ? `rgba(${color.primaryRGB}, 0.2)` : color.gray3};
   }
 `;
 

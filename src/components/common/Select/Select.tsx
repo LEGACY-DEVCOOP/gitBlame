@@ -51,7 +51,7 @@ const StyledSelect = styled.select<{ $fullWidth: boolean }>`
   ${font.p1}
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
   background-color: ${color.black};
-  border: 1px solid #3a3a3a;
+  border: 1px solid ${color.gray3};
   border-radius: 12px;
   padding: 18px 20px;
   color: ${color.white};
@@ -66,7 +66,7 @@ const StyledSelect = styled.select<{ $fullWidth: boolean }>`
 
   &:focus {
     border-color: ${color.primary};
-    box-shadow: 0 0 0 2px rgba(240, 2, 1, 0.1);
+    box-shadow: 0 0 0 2px rgba(${color.primaryRGB}, 0.1);
   }
 
   &::placeholder {

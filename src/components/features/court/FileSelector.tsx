@@ -93,7 +93,7 @@ const ModalContainer = styled.div`
   height: 80vh;
   background-color: ${color.darkgray};
   border-radius: 16px;
-  border: 1px solid #3a3a3a;
+  border: 1px solid ${color.gray3};
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -105,7 +105,7 @@ const Header = styled.div`
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  border-bottom: 1px solid #3a3a3a;
+  border-bottom: 1px solid ${color.gray3};
 `;
 
 const Title = styled.h2`
@@ -138,6 +138,6 @@ const Footer = styled.div`
   justify-content: flex-end;
   gap: 12px;
   padding: 16px 24px;
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid ${color.gray3};
   background-color: ${color.darkgray};
 `;

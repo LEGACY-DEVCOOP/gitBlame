@@ -89,9 +89,9 @@ const StyledButton = styled.button<{
           border: none;
 
           &:hover:not(:disabled) {
-            background-color: #d00201;
+            background-color: ${color.primaryHover};
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(240, 2, 1, 0.3);
+            box-shadow: 0 4px 12px rgba(${color.primaryRGB}, 0.3);
           }
           &:active:not(:disabled) {
             transform: translateY(0);
@@ -99,9 +99,9 @@ const StyledButton = styled.button<{
         `;
       case 'secondary':
         return css`
-          background-color: #333;
+          background-color: ${color.gray2};
           color: ${color.white};
-          border: 1px solid #555;
+          border: 1px solid ${color.gray4};
 
           &:hover:not(:disabled) {
             background-color: ${color.primary};
