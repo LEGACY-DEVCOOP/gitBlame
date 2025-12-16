@@ -43,11 +43,12 @@ export default function ComplaintForm() {
         </FormItem>
 
         <FormItem label="용의자 파일">
-          <div style={{ position: 'relative', width: '100%' }}>
+          <FileInputWrapper>
             <Input
               readOnly
               placeholder="오른쪽 버튼을 눌러 파일을 선택해주세요"
               value={formData.filePath}
+              style={{ paddingRight: '100px' }}
             />
             <FileFindButton
               type="button"
@@ -57,7 +58,7 @@ export default function ComplaintForm() {
             >
               파일 찾기
             </FileFindButton>
-          </div>
+          </FileInputWrapper>
         </FormItem>
 
         <FormItem label="피해 내역 (에러 로그)">
@@ -114,4 +115,9 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 40px;
+`;
+
+const FileInputWrapper = styled.div`
+  position: relative;
+  width: 100%;
 `;
