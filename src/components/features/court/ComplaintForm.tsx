@@ -3,7 +3,7 @@
 import styled from '@emotion/styled';
 import { useState } from 'react';
 import color from '@/styles/color';
-import FormItem from './FormItem';
+import FormItem from '@/components/common/FormItem/FormItem';
 import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
@@ -49,9 +49,6 @@ export default function ComplaintForm() {
               readOnly
               placeholder="오른쪽 버튼을 눌러 파일을 선택해주세요"
               value={formData.filePath}
-              onChange={(e) =>
-                setFormData({ ...formData, filePath: e.target.value })
-              }
             />
             <FileFindButton
               type="button"
