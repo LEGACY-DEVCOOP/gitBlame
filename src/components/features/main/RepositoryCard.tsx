@@ -1,10 +1,12 @@
 'use client';
 
 import styled from '@emotion/styled';
+import { useRouter } from 'next/navigation';
 import color from '@/styles/color';
 import font from '@/styles/font';
 
 interface RepositoryCardProps {
+  id: number;
   repoName: string;
   stars: number;
   forks: number;
@@ -12,13 +14,20 @@ interface RepositoryCardProps {
 }
 
 export default function RepositoryCard({
+  id,
   repoName,
   stars,
   forks,
   updateHistory,
 }: RepositoryCardProps) {
+  const router = useRouter();
+
+  const handleClick = () => {
+    router.push(`/repo/${id}?name=${encodeURIComponent(repoName)}`);
+  };
+
   return (
-    <Card>
+    <Card onClick={handleClick}>
       <CardHeader>
         <RepoName>{repoName}</RepoName>
         <UpdateHistory>{updateHistory}</UpdateHistory>
@@ -40,10 +49,12 @@ const Card = styled.div`
   flex-direction: column;
   gap: 2rem;
   transition: all 0.3s ease;
+  cursor: pointer;
 
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: ${color.primary};
   }
 `;
 
