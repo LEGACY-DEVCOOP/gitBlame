@@ -2,6 +2,8 @@
 
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
+import Image from 'next/image';
+import color from '@/styles/color';
 
 const LandingPage = () => {
   return (
@@ -10,11 +12,17 @@ const LandingPage = () => {
 
       <ContentWrapper>
         <LogoSection>
-          <img src="/gitblame_text_logo.png" alt="GitBlame Logo" />
+          <LogoImage
+            src="/gitblame_text_logo.png"
+            alt="GitBlame Logo"
+            width={320}
+            height={80}
+            priority
+          />
         </LogoSection>
 
         <LoginButton>
-          <img
+          <GithubIcon
             src="/github-mark.png"
             alt="GitBlame Login"
             width={24}
@@ -46,7 +54,7 @@ const StyledLandingPage = styled.div`
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #0a0a14;
+  background: ${color.marketingBg};
 `;
 
 const AnimatedBackground = styled.div`
@@ -59,12 +67,12 @@ const AnimatedBackground = styled.div`
 
   background: linear-gradient(
     135deg,
-    #0a0a14 0%,
-    #1a0a0a 20%,
-    #2d1810 40%,
-    #ff4500 60%,
-    #ff6b35 80%,
-    #0a0a14 100%
+    ${color.marketingBg} 0%,
+    ${color.marketingGradient1} 20%,
+    ${color.marketingGradient2} 40%,
+    ${color.marketingPrimary} 60%,
+    ${color.marketingSecondary} 80%,
+    ${color.marketingBg} 100%
   );
   background-size: 400% 400%;
   animation: ${gradientAnimation} 15s ease infinite;
@@ -141,7 +149,7 @@ const LoginButton = styled.button`
   gap: 0.75rem;
 
   background: white;
-  color: #000;
+  color: ${color.black};
   border: none;
   border-radius: 9999px;
 
@@ -163,10 +171,18 @@ const LoginButton = styled.button`
   }
 `;
 
-const GithubIconSmall = styled.div`
+const LogoImage = styled(Image)`
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+
+  @media (max-width: 768px) {
+    height: 60px;
+  }
+`;
+
+const GithubIcon = styled(Image)`
   width: 24px;
   height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: contain;
 `;
