@@ -10,31 +10,45 @@ export default function MainPage() {
   const repositories = [
     {
       id: 1,
-      repoName: 'TERA/sosojung',
-      stars: 1,
-      forks: 1,
-      updateHistory: '업데이트 내역',
+      repoName: 'munsojeong/gitblame',
+      stars: 2147,
+      forks: 387,
+      updateHistory: '2 hours ago',
     },
     {
       id: 2,
-      repoName: 'TERA/sosojung',
-      stars: 1,
-      forks: 1,
-      updateHistory: '업데이트 내역',
+      repoName: 'LEGACY-DEVCOOP/react-dashboard',
+      stars: 1523,
+      forks: 234,
+      updateHistory: '1 day ago',
     },
     {
       id: 3,
-      repoName: 'TERA/sosojung',
-      stars: 1,
-      forks: 1,
-      updateHistory: '업데이트 내역',
+      repoName: 'munsojeong/next-auth-template',
+      stars: 856,
+      forks: 142,
+      updateHistory: '3 days ago',
     },
     {
       id: 4,
-      repoName: 'TERA/sosojung',
-      stars: 1,
-      forks: 1,
-      updateHistory: '업데이트 내역',
+      repoName: 'LEGACY-DEVCOOP/design-system',
+      stars: 634,
+      forks: 98,
+      updateHistory: '1 week ago',
+    },
+    {
+      id: 5,
+      repoName: 'munsojeong/typescript-utils',
+      stars: 412,
+      forks: 67,
+      updateHistory: '2 weeks ago',
+    },
+    {
+      id: 6,
+      repoName: 'LEGACY-DEVCOOP/api-gateway',
+      stars: 298,
+      forks: 45,
+      updateHistory: '1 month ago',
     },
   ];
 
@@ -53,6 +67,7 @@ export default function MainPage() {
           {repositories.map((repo) => (
             <RepositoryCard
               key={repo.id}
+              id={repo.id}
               repoName={repo.repoName}
               stars={repo.stars}
               forks={repo.forks}
@@ -116,10 +131,6 @@ const JudgeButton = styled.button`
   &:active {
     transform: translateY(0);
   }
-`;
-
-const BasketIcon = styled.span`
-  font-size: 1.5rem;
 `;
 
 const RepositoryList = styled.div`
