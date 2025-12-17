@@ -1,4 +1,5 @@
 import { Global, css } from '@emotion/react';
+import color from './color';
 
 const GlobalStyle = () => (
   <Global
@@ -25,8 +26,8 @@ const GlobalStyle = () => (
         font-family:
           -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
           Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        background-color: #fff;
-        color: #000;
+        background-color: ${color.white};
+        color: ${color.black};
         line-height: 1.5;
         -webkit-font-smoothing: antialiased;
         -ms-overflow-style: none;
