@@ -46,13 +46,13 @@ const MOCK_DATA = {
     },
     {
       author: 'sosojung',
-      message: 'fix(user): 휠오류 수정',
-      timestamp: '3시간 전',
+      message: 'feat: 결제 모듈 초기 구현',
+      timestamp: '5시간 전',
     },
     {
-      author: 'sosojung',
-      message: 'fix(user): 휠오류 수정',
-      timestamp: '3시간 전',
+      author: 'craftmanship',
+      message: 'refactor: 상태 처리 로직 최적화',
+      timestamp: '1일 전',
     },
   ],
 };
