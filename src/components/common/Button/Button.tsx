@@ -6,7 +6,7 @@ import color from '@/styles/color';
 import font from '@/styles/font';
 import { css } from '@emotion/react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'small' | 'medium' | 'large';
 
 interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
@@ -50,6 +50,7 @@ const StyledButton = styled.button<{
   cursor: pointer;
   transition: all 0.2s ease;
   width: ${({ $fullWidth }) => ($fullWidth ? '100%' : 'auto')};
+  box-sizing: border-box;
   white-space: nowrap;
 
   &:disabled {
@@ -83,7 +84,6 @@ const StyledButton = styled.button<{
     switch ($variant) {
       case 'primary':
         return css`
-          box-sizing: border-box;
           background-color: ${color.primary};
           color: ${color.white};
           border: none;
@@ -117,6 +117,18 @@ const StyledButton = styled.button<{
           &:hover:not(:disabled) {
             border-color: ${color.white};
             background-color: rgba(255, 255, 255, 0.1);
+          }
+        `;
+      case 'ghost':
+        return css`
+          background: transparent;
+          border: 2px solid ${color.primary};
+          color: ${color.primary};
+
+          &:hover:not(:disabled) {
+            background-color: rgba(${color.primaryRGB}, 0.05);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(${color.primaryRGB}, 0.1);
           }
         `;
     }
