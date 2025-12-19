@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import styled from '@emotion/styled';
 import GlobalStyle from '@/styles/global';
 import Header from '@/components/common/Header/Header';
+import AuthInitializer from '@/components/common/AuthInitializer/AuthInitializer';
 
 interface LayoutClientProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ const LayoutClient = ({ children }: LayoutClientProps) => {
   return (
     <>
       <GlobalStyle />
+      <AuthInitializer />
       <Body>
         <Suspense
           fallback={<div style={{ height: '88px', background: '#000' }} />}
