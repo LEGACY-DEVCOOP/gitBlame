@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 
-const BASE_URL = 'http://127.0.0.1:8000';
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || 'http://127.0.0.1:8000';
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -35,9 +36,14 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Handle 401: Unauthorized - maybe clear token and redirect to login
+    // Handle 401: Unauthorized - clear token and redirect to login
     if (error.response && error.response.status === 401) {
-      // Logic to logout user
+      // Clear the access token
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        // Redirect to home page (marketing/login page)
+        window.location.href = '/';
+      }
     }
     return Promise.reject(error);
   }

@@ -13,6 +13,9 @@ const AuthInitializer = () => {
 
     if (token) {
       // Save token
+      // ⚠️ Security Note: Storing JWT in localStorage is vulnerable to XSS attacks.
+      // For production, consider using httpOnly cookies instead.
+      // See: https://cheatsheetseries.owasp.org/cheatsheets/HTML5_Security_Cheat_Sheet.html#local-storage
       localStorage.setItem('accessToken', token);
 
       // Clean URL

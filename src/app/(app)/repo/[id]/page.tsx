@@ -22,7 +22,12 @@ export default function RepoDetailPage() {
 
   // Parse owner and repo from full_name (e.g., "owner/repo")
   const [owner, repo] = useMemo(() => {
-    return repoName.split('/');
+    const parts = repoName.split('/');
+    if (parts.length !== 2) {
+      console.error('Invalid repository name format. Expected "owner/repo"');
+      return ['', ''];
+    }
+    return parts;
   }, [repoName]);
 
   // Fetch contributors and commits
