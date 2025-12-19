@@ -39,9 +39,13 @@ export default function IntensitySelector({
         {INTENSITIES.map((item) => (
           <ProtocolCard
             key={item.id}
+            as="button"
+            type="button"
             isSelected={selected === item.id}
             activeColor={item.color}
             onClick={() => onChange(item.id)}
+            aria-pressed={selected === item.id}
+            aria-label={`${item.label} 강도로 설정`}
           >
             <ProtocolLabel>{item.protocol}</ProtocolLabel>
             <IntensityLabel>{item.label}</IntensityLabel>
@@ -120,10 +124,29 @@ const ProtocolCard = styled.div<{ isSelected: boolean; activeColor: string }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
+  /* Button 요소를 위한 기본 스타일 초기화 */
+  &[type='button'] {
+    font: inherit;
+    text-align: left;
+  }
+
   &:hover {
     background: rgba(255, 255, 255, 0.06);
     border-color: ${(props) =>
       props.isSelected ? props.activeColor : 'rgba(255, 255, 255, 0.2)'};
+  }
+
+  /* 키보드 포커스 스타일 */
+  &:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: ${(props) => props.activeColor};
+    box-shadow: 0 0 0 2px ${(props) => props.activeColor}40;
+  }
+
+  /* 활성화된 상태 */
+  &:active {
+    transform: scale(0.98);
   }
 
   ${(props) =>
