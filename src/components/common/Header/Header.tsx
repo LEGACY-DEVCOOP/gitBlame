@@ -5,12 +5,13 @@ import Image from 'next/image';
 import color from '@/styles/color';
 import font from '@/styles/font';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useUser } from '@/hooks/queries/useAuth';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const username = '문소정';
+  const { data: user } = useUser();
 
   const isRepoDetailPage = pathname?.startsWith('/repo/');
   const repoName = isRepoDetailPage
@@ -28,7 +29,7 @@ export default function Header() {
         />
         <LogoText>{isRepoDetailPage ? repoName : 'GITBLAME'}</LogoText>
       </Logo>
-      <Username>@{username}</Username>
+      {user && <Username>@{user.username}</Username>}
     </HeaderContainer>
   );
 }

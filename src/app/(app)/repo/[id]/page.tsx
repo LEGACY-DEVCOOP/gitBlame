@@ -8,11 +8,8 @@ import Courthouse from '../../../../../public/assets/Courthouse';
 import CommitChart from '@/components/features/repo/CommitChart';
 import ContributorChart from '@/components/features/repo/ContributorChart';
 import RecentCommits from '@/components/features/repo/RecentCommits';
-import {
-  mockRepoStats,
-  mockContributorData,
-  mockRecentCommits,
-} from '@/mocks/repoData';
+import { useContributors, useCommits } from '@/hooks/queries/useGithub';
+import { useMemo } from 'react';
 
 export default function RepoDetailPage() {
   const params = useParams();
@@ -20,6 +17,49 @@ export default function RepoDetailPage() {
   const router = useRouter();
   const repoName = searchParams?.get('name') || 'Repository';
   const repoId = params?.id;
+  const stars = searchParams?.get('stars') || '0';
+  const forks = searchParams?.get('forks') || '0';
+
+  // Parse owner and repo from full_name (e.g., "owner/repo")
+  const [owner, repo] = useMemo(() => {
+    const parts = repoName.split('/');
+    if (parts.length !== 2) {
+      console.error('Invalid repository name format. Expected "owner/repo"');
+      return ['', ''];
+    }
+    return parts;
+  }, [repoName]);
+
+  // Fetch contributors and commits
+  const { data: contributors, isLoading: loadingContributors } =
+    useContributors(owner, repo);
+  const { data: commits, isLoading: loadingCommits } = useCommits(owner, repo);
+
+  // Transform contributors data for charts
+  const contributorData = useMemo(() => {
+    if (!contributors) return [];
+
+    return contributors.map((contributor, index) => ({
+      id: index.toString(),
+      name: contributor.username,
+      commits: contributor.commits,
+      lines: contributor.additions + contributor.deletions,
+      percentage: Math.round(contributor.percentage),
+    }));
+  }, [contributors]);
+
+  // Transform commits data for recent commits list
+  const recentCommitsData = useMemo(() => {
+    if (!commits) return [];
+
+    return commits.slice(0, 6).map((commit, index) => ({
+      id: index + 1,
+      message: commit.message,
+      author: commit.author.username,
+      date: new Date(commit.date).toLocaleDateString('ko-KR'),
+      hash: commit.sha.substring(0, 7),
+    }));
+  }, [commits]);
 
   const handleJudgeClick = () => {
     if (!repoId) {
@@ -28,6 +68,16 @@ export default function RepoDetailPage() {
     }
     router.push(`/court?repo=${repoId}&name=${encodeURIComponent(repoName)}`);
   };
+
+  if (loadingContributors || loadingCommits) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <RepoTitle>Loading...</RepoTitle>
+        </MainContent>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -43,29 +93,29 @@ export default function RepoDetailPage() {
           <RepoStats>
             <StatItem>
               <StatLabel>Stars</StatLabel>
-              <StatValue>{mockRepoStats.stars}</StatValue>
+              <StatValue>{stars}</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Forks</StatLabel>
-              <StatValue>{mockRepoStats.forks}</StatValue>
+              <StatValue>{forks}</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Contributors</StatLabel>
-              <StatValue>{mockRepoStats.contributors}</StatValue>
+              <StatValue>{contributors?.length || 0}</StatValue>
             </StatItem>
             <StatItem>
               <StatLabel>Total Commits</StatLabel>
-              <StatValue>{mockRepoStats.totalCommits}</StatValue>
+              <StatValue>{commits?.length || 0}</StatValue>
             </StatItem>
           </RepoStats>
         </HeaderSection>
 
         <ChartsGrid>
-          <CommitChart data={mockContributorData} />
-          <ContributorChart data={mockContributorData} />
+          <CommitChart data={contributorData} />
+          <ContributorChart data={contributorData} />
         </ChartsGrid>
 
-        <RecentCommits commits={mockRecentCommits} />
+        <RecentCommits commits={recentCommitsData} />
       </MainContent>
     </PageContainer>
   );

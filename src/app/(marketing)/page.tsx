@@ -4,6 +4,7 @@ import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 import Image from 'next/image';
 import color from '@/styles/color';
+import { authApi } from '@/service/api';
 
 const LandingPage = () => {
   return (
@@ -21,7 +22,7 @@ const LandingPage = () => {
           />
         </LogoSection>
 
-        <LoginButton>
+        <LoginButton onClick={authApi.login}>
           <GithubIcon
             src="/github-mark.png"
             alt="GitBlame Login"
