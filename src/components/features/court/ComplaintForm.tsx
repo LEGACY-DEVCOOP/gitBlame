@@ -8,6 +8,7 @@ import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
+import { useRouter } from 'next/navigation';
 
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
@@ -15,7 +16,6 @@ const periodOptions = [
   { value: '7', label: '최근 7일 이내 (기본)' },
   { value: '30', label: '최근 30일 이내' },
 ];
-
 export default function ComplaintForm() {
   const [formData, setFormData] = useState({
     title: '',
@@ -24,9 +24,11 @@ export default function ComplaintForm() {
     period: '7',
   });
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    router.push('/court/summary');
   };
 
   return (
