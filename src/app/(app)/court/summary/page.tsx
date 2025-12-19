@@ -42,19 +42,24 @@ const MOCK_DATA = {
   ],
   commits: [
     {
-      author: 'sosojung',
-      message: 'fix(user): 휠오류 수정',
-      timestamp: '3시간 전',
+      author: 'craftmanship',
+      message: 'feat: 결제 버튼 상태 코드 처리 로직 추가',
+      timestamp: '2일 전',
     },
     {
-      author: 'sosojung',
-      message: 'feat: 결제 모듈 초기 구현',
-      timestamp: '5시간 전',
+      author: 'kingofhwang',
+      message: 'fix: 결제 API 에러 핸들링 임시 수정',
+      timestamp: '1일 전',
     },
     {
       author: 'craftmanship',
-      message: 'refactor: 상태 처리 로직 최적화',
-      timestamp: '1일 전',
+      message: 'refactor: 결제 모듈 상태 처리 로직 최적화',
+      timestamp: '12시간 전',
+    },
+    {
+      author: 'sosojung',
+      message: 'fix: 결제 버튼 500 에러 긴급 수정 시도',
+      timestamp: '3시간 전',
     },
   ],
 };
