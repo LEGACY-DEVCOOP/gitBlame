@@ -23,7 +23,9 @@ export default function RepositoryCard({
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/repo/${id}?name=${encodeURIComponent(repoName)}`);
+    router.push(
+      `/repo/${id}?name=${encodeURIComponent(repoName)}&stars=${stars}&forks=${forks}`
+    );
   };
 
   return (

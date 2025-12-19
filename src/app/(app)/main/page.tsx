@@ -5,52 +5,34 @@ import RepositoryCard from '@/components/features/main/RepositoryCard';
 import color from '@/styles/color';
 import font from '@/styles/font';
 import Courthouse from '../../../../public/assets/Courthouse';
+import { useRepos } from '@/hooks/queries/useGithub';
 
 export default function MainPage() {
-  const repositories = [
-    {
-      id: 1,
-      repoName: 'munsojeong/gitblame',
-      stars: 2147,
-      forks: 387,
-      updateHistory: '2 hours ago',
-    },
-    {
-      id: 2,
-      repoName: 'LEGACY-DEVCOOP/react-dashboard',
-      stars: 1523,
-      forks: 234,
-      updateHistory: '1 day ago',
-    },
-    {
-      id: 3,
-      repoName: 'munsojeong/next-auth-template',
-      stars: 856,
-      forks: 142,
-      updateHistory: '3 days ago',
-    },
-    {
-      id: 4,
-      repoName: 'LEGACY-DEVCOOP/design-system',
-      stars: 634,
-      forks: 98,
-      updateHistory: '1 week ago',
-    },
-    {
-      id: 5,
-      repoName: 'munsojeong/typescript-utils',
-      stars: 412,
-      forks: 67,
-      updateHistory: '2 weeks ago',
-    },
-    {
-      id: 6,
-      repoName: 'LEGACY-DEVCOOP/api-gateway',
-      stars: 298,
-      forks: 45,
-      updateHistory: '1 month ago',
-    },
-  ];
+  const { data: repositories, isLoading, error } = useRepos();
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <MainContent>
+          {/* You might want a better loading state */}
+          <PageTitle>Loading...</PageTitle>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <PageTitle>Error loading repositories</PageTitle>
+          <ErrorMessage>
+            {error instanceof Error ? error.message : 'Unknown error'}
+          </ErrorMessage>
+        </MainContent>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -64,16 +46,20 @@ export default function MainPage() {
         </TitleSection>
 
         <RepositoryList>
-          {repositories.map((repo) => (
-            <RepositoryCard
-              key={repo.id}
-              id={repo.id}
-              repoName={repo.repoName}
-              stars={repo.stars}
-              forks={repo.forks}
-              updateHistory={repo.updateHistory}
-            />
-          ))}
+          {repositories && repositories.length > 0 ? (
+            repositories.map((repo) => (
+              <RepositoryCard
+                key={repo.id}
+                id={repo.id}
+                repoName={repo.full_name}
+                stars={repo.stargazers_count}
+                forks={repo.forks_count}
+                updateHistory={new Date(repo.updated_at).toLocaleDateString()}
+              />
+            ))
+          ) : (
+            <PageTitle>No repositories found</PageTitle>
+          )}
         </RepositoryList>
       </MainContent>
     </PageContainer>
@@ -137,4 +123,10 @@ const RepositoryList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+`;
+
+const ErrorMessage = styled.p`
+  ${font.p1}
+  color: ${color.primary};
+  margin-top: 1rem;
 `;
