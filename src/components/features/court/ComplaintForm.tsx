@@ -1,14 +1,15 @@
 'use client';
 
 import styled from '@emotion/styled';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import color from '@/styles/color';
 import FormItem from '@/components/common/FormItem/FormItem';
 import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useCreateJudgment } from '@/hooks/queries/useJudgments';
 
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
@@ -16,6 +17,7 @@ const periodOptions = [
   { value: '7', label: '최근 7일 이내 (기본)' },
   { value: '30', label: '최근 30일 이내' },
 ];
+
 export default function ComplaintForm() {
   const [formData, setFormData] = useState({
     title: '',
@@ -25,10 +27,49 @@ export default function ComplaintForm() {
   });
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const createJudgment = useCreateJudgment();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Get repo info from URL params
+  const repoName = searchParams?.get('name') || '';
+  const [owner, repo] = useMemo(() => {
+    const parts = repoName.split('/');
+    if (parts.length !== 2) {
+      return ['', ''];
+    }
+    return parts;
+  }, [repoName]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/court/summary');
+
+    // Validate form
+    if (!formData.title || !formData.filePath || !formData.description) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    if (!owner || !repo) {
+      alert('레포지토리 정보가 올바르지 않습니다.');
+      return;
+    }
+
+    try {
+      const judgment = await createJudgment.mutateAsync({
+        repo_owner: owner,
+        repo_name: repo,
+        title: formData.title,
+        description: formData.description,
+        file_path: formData.filePath,
+        period_days: parseInt(formData.period, 10),
+      });
+
+      // Navigate to judgment detail page or summary page
+      router.push(`/judgment/${judgment.id}`);
+    } catch (error) {
+      console.error('Failed to create judgment:', error);
+      alert('고소장 접수에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
@@ -84,8 +125,13 @@ export default function ComplaintForm() {
           />
         </FormItem>
 
-        <Button type="submit" size="large" fullWidth>
-          범인 찾기
+        <Button
+          type="submit"
+          size="large"
+          fullWidth
+          disabled={createJudgment.isPending}
+        >
+          {createJudgment.isPending ? '접수 중...' : '범인 찾기'}
         </Button>
       </Form>
 
