@@ -66,7 +66,7 @@ export default function RepoDetailPage() {
       console.error('Repository ID is missing');
       return;
     }
-    router.push(`/court?repo=${repoId}&name=${encodeURIComponent(repoName)}`);
+    router.push(`/repo/${repoId}/court?name=${encodeURIComponent(repoName)}`);
   };
 
   if (loadingContributors || loadingCommits) {

@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import ComplaintForm from '@/components/features/court/ComplaintForm';
 import color from '@/styles/color';
 import font from '@/styles/font';
-import Courthouse from '../../../../public/assets/Courthouse';
+import Courthouse from '../../../../../../public/assets/Courthouse';
 
 export default function CourtPage() {
   return (
