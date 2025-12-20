@@ -51,11 +51,31 @@ export default function ResultPage() {
   const handleDownload = async () => {
     if (!contentRef.current) return;
     try {
+      // 캡처 전에 제외할 요소들 숨기기
+      const excludeElements = contentRef.current.querySelectorAll(
+        '.exclude-from-capture'
+      );
+      const originalDisplays: string[] = [];
+
+      console.log('Found exclude elements:', excludeElements.length); // 디버깅
+
+      excludeElements.forEach((element, index) => {
+        originalDisplays[index] = (element as HTMLElement).style.display;
+        (element as HTMLElement).style.display = 'none';
+        console.log('Hiding element:', element); // 디버깅
+      });
+
       const dataUrl = await toPng(contentRef.current, {
         cacheBust: true,
         backgroundColor: color.black,
         pixelRatio: 2,
       });
+
+      // 캡처 후에 요소들 다시 보이기
+      excludeElements.forEach((element, index) => {
+        (element as HTMLElement).style.display = originalDisplays[index] || '';
+      });
+
       const link = document.createElement('a');
       link.download = `blame_result_${MOCK_DATA.culprit.name}.png`;
       link.href = dataUrl;
@@ -63,6 +83,14 @@ export default function ResultPage() {
     } catch (err) {
       console.error('Download failed:', err);
       alert('이미지 저장에 실패했습니다.');
+
+      // 에러 발생 시에도 요소들 다시 보이기
+      const excludeElements = contentRef.current?.querySelectorAll(
+        '.exclude-from-capture'
+      );
+      excludeElements?.forEach((element) => {
+        (element as HTMLElement).style.display = '';
+      });
     }
   };
 
@@ -87,7 +115,10 @@ export default function ResultPage() {
       <MainContent ref={contentRef}>
         <BackgroundEffect />
 
-        <VerdictHeader {...MOCK_DATA.caseInfo} />
+        <VerdictHeader
+          {...MOCK_DATA.caseInfo}
+          className="exclude-from-capture"
+        />
 
         <CulpritDisplay
           name={MOCK_DATA.culprit.name}
@@ -95,9 +126,12 @@ export default function ResultPage() {
           stickers={stickers}
         />
 
-        <StickerSelector onAddSticker={addSticker} />
+        <StickerSelector
+          onAddSticker={addSticker}
+          className="exclude-from-capture"
+        />
 
-        <ActionButtons>
+        <ActionButtons className="exclude-from-capture">
           <ActionButton variant="ghost" onClick={handleDownload}>
             <span style={{ color: color.primary }}>BLAME</span> 이미지 저장
           </ActionButton>
