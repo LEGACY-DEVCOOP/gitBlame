@@ -6,13 +6,15 @@ const EMOJI_LIST = ['🔥', '👿', '👊', '💩', '🤡', '🚔', '⛓️', '�
 
 interface StickerSelectorProps {
   onAddSticker: (emoji: string) => void;
+  className?: string;
 }
 
 export default function StickerSelector({
   onAddSticker,
+  className,
 }: StickerSelectorProps) {
   return (
-    <Container>
+    <Container className={className}>
       {EMOJI_LIST.map((emoji) => (
         <EmojiButton key={emoji} onClick={() => onAddSticker(emoji)}>
           {emoji}

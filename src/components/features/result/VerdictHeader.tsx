@@ -11,6 +11,7 @@ interface VerdictHeaderProps {
   caseNumber: string;
   complainant: string;
   accused: string;
+  className?: string;
 }
 
 export default function VerdictHeader({
@@ -20,9 +21,10 @@ export default function VerdictHeader({
   caseNumber,
   complainant,
   accused,
+  className,
 }: VerdictHeaderProps) {
   return (
-    <Container>
+    <Container className={className}>
       <VerdictTitle>판결문</VerdictTitle>
 
       <CaseInfoGrid>
