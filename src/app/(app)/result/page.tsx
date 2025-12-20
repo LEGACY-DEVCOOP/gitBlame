@@ -50,30 +50,24 @@ export default function ResultPage() {
 
   const handleDownload = async () => {
     if (!contentRef.current) return;
+
+    // 스코프 외부에서 변수 선언
+    const excludeElements = contentRef.current.querySelectorAll(
+      '.exclude-from-capture'
+    );
+    const originalDisplays: string[] = [];
+
     try {
       // 캡처 전에 제외할 요소들 숨기기
-      const excludeElements = contentRef.current.querySelectorAll(
-        '.exclude-from-capture'
-      );
-      const originalDisplays: string[] = [];
-
-      console.log('Found exclude elements:', excludeElements.length); // 디버깅
-
       excludeElements.forEach((element, index) => {
         originalDisplays[index] = (element as HTMLElement).style.display;
         (element as HTMLElement).style.display = 'none';
-        console.log('Hiding element:', element); // 디버깅
       });
 
       const dataUrl = await toPng(contentRef.current, {
         cacheBust: true,
         backgroundColor: color.black,
         pixelRatio: 2,
-      });
-
-      // 캡처 후에 요소들 다시 보이기
-      excludeElements.forEach((element, index) => {
-        (element as HTMLElement).style.display = originalDisplays[index] || '';
       });
 
       const link = document.createElement('a');
@@ -83,30 +77,58 @@ export default function ResultPage() {
     } catch (err) {
       console.error('Download failed:', err);
       alert('이미지 저장에 실패했습니다.');
-
-      // 에러 발생 시에도 요소들 다시 보이기
-      const excludeElements = contentRef.current?.querySelectorAll(
-        '.exclude-from-capture'
-      );
-      excludeElements?.forEach((element) => {
-        (element as HTMLElement).style.display = '';
+    } finally {
+      // 성공/실패 여부와 관계없이 원래 상태로 복원
+      excludeElements.forEach((element, index) => {
+        (element as HTMLElement).style.display = originalDisplays[index] || '';
       });
     }
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     const text = `[GitBlame 판결]\n프로젝트: ${MOCK_DATA.caseInfo.project}\n범인: ${MOCK_DATA.culprit.name}\n책임도: ${MOCK_DATA.culprit.percentage}%\n\n#GitBlame #개발자재판`;
+
     if (navigator.share) {
-      navigator
-        .share({
+      try {
+        await navigator.share({
           title: 'GitBlame 판결 결과',
           text: text,
           url: window.location.href,
-        })
-        .catch(console.error);
+        });
+      } catch (err) {
+        console.error('Share failed:', err);
+        // Web Share API 실패 시 클립보드 fallback
+        await copyToClipboard(text);
+      }
     } else {
-      navigator.clipboard.writeText(text);
+      await copyToClipboard(text);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      // 최신 Clipboard API 시도
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        alert('결과가 클립보드에 복사되었습니다.');
+        return;
+      }
+
+      // Fallback: 가상 textarea 사용 (HTTP 환경 등)
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
       alert('결과가 클립보드에 복사되었습니다.');
+    } catch (err) {
+      console.error('Clipboard operation failed:', err);
+      alert('클립보드 복사에 실패했습니다. 수동으로 복사해주세요.');
     }
   };
 
