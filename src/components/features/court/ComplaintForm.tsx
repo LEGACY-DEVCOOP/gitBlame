@@ -138,6 +138,8 @@ export default function ComplaintForm() {
         isOpen={isFileSelectorOpen}
         onClose={() => setIsFileSelectorOpen(false)}
         onSelect={(path) => setFormData({ ...formData, filePath: path })}
+        owner={owner}
+        repo={repo}
       />
     </FormCard>
   );

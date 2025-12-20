@@ -56,6 +56,26 @@ export interface CommitParams {
   per_page?: number;
 }
 
+// File Tree Types
+export interface FileTreeItem {
+  path: string;
+  type: 'blob' | 'tree'; // blob = file, tree = directory
+  sha: string;
+  size: number | null;
+  url: string;
+}
+
+export interface FileTree {
+  sha: string;
+  url: string;
+  tree: FileTreeItem[];
+  truncated: boolean;
+}
+
+export interface FileTreeParams {
+  branch?: string;
+}
+
 // Judgments Types
 export interface Suspect {
   username: string;
@@ -170,6 +190,18 @@ export const githubApi = {
       { params }
     );
     return data.commits || [];
+  },
+
+  getFileTree: async (
+    owner: string,
+    repo: string,
+    params?: FileTreeParams
+  ): Promise<FileTree> => {
+    const { data } = await apiClient.get<FileTree>(
+      `/github/repos/${owner}/${repo}/tree`,
+      { params }
+    );
+    return data;
   },
 };
 

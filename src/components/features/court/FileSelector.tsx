@@ -1,21 +1,81 @@
 'use client';
 
 import styled from '@emotion/styled';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import color from '@/styles/color';
 import font from '@/styles/font';
-import { mockFileTree } from '@/mocks/fileTree';
+import { FileNode } from '@/mocks/fileTree';
 import FileTreeItem from './FileTreeItem';
 import Button from '@/components/common/Button/Button';
+import { useFileTree } from '@/hooks/queries/useGithub';
+import { FileTreeItem as APIFileTreeItem } from '@/service/api';
 
 interface FileSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (path: string) => void;
+  owner: string;
+  repo: string;
 }
 
-const FileSelector = ({ isOpen, onClose, onSelect }: FileSelectorProps) => {
+// Transform API response to FileNode structure
+function transformToFileNode(items: APIFileTreeItem[]): FileNode {
+  const root: FileNode = {
+    name: 'root',
+    type: 'folder',
+    path: '',
+    children: [],
+  };
+
+  // Build a map of path -> node
+  const nodeMap = new Map<string, FileNode>();
+  nodeMap.set('', root);
+
+  // Sort items by path depth to ensure parent folders are created first
+  const sortedItems = [...items].sort((a, b) => {
+    const depthA = a.path.split('/').length;
+    const depthB = b.path.split('/').length;
+    return depthA - depthB;
+  });
+
+  for (const item of sortedItems) {
+    const pathParts = item.path.split('/');
+    const name = pathParts[pathParts.length - 1];
+    const parentPath = pathParts.slice(0, -1).join('/');
+
+    const node: FileNode = {
+      name,
+      type: item.type === 'blob' ? 'file' : 'folder',
+      path: item.path,
+      children: item.type === 'tree' ? [] : undefined,
+    };
+
+    nodeMap.set(item.path, node);
+
+    // Add to parent
+    const parent = nodeMap.get(parentPath);
+    if (parent && parent.children) {
+      parent.children.push(node);
+    }
+  }
+
+  return root;
+}
+
+const FileSelector = ({
+  isOpen,
+  onClose,
+  onSelect,
+  owner,
+  repo,
+}: FileSelectorProps) => {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const { data: fileTreeData, isLoading, error } = useFileTree(owner, repo);
+
+  const fileTree = useMemo(() => {
+    if (!fileTreeData) return null;
+    return transformToFileNode(fileTreeData.tree);
+  }, [fileTreeData]);
 
   useEffect(() => {
     if (isOpen) {
@@ -51,12 +111,25 @@ const FileSelector = ({ isOpen, onClose, onSelect }: FileSelectorProps) => {
           <CloseButton onClick={onClose}>✕</CloseButton>
         </Header>
         <Content>
-          <FileTreeItem
-            node={mockFileTree}
-            selectedPath={selectedPath}
-            onSelect={setSelectedPath}
-            onConfirm={handleItemConfirm}
-          />
+          {isLoading && (
+            <LoadingMessage>파일 트리를 불러오는 중...</LoadingMessage>
+          )}
+          {error && (
+            <ErrorMessage>파일 트리를 불러오는데 실패했습니다.</ErrorMessage>
+          )}
+          {fileTree && fileTree.children && (
+            <>
+              {fileTree.children.map((child) => (
+                <FileTreeItem
+                  key={child.path}
+                  node={child}
+                  selectedPath={selectedPath}
+                  onSelect={setSelectedPath}
+                  onConfirm={handleItemConfirm}
+                />
+              ))}
+            </>
+          )}
         </Content>
         <Footer>
           <Button variant="outline" size="small" onClick={onClose}>
@@ -140,4 +213,18 @@ const Footer = styled.div`
   padding: 16px 24px;
   border-top: 1px solid ${color.gray3};
   background-color: ${color.darkgray};
+`;
+
+const LoadingMessage = styled.div`
+  ${font.p1}
+  color: ${color.lightgray};
+  text-align: center;
+  padding: 40px 20px;
+`;
+
+const ErrorMessage = styled.div`
+  ${font.p1}
+  color: ${color.primary};
+  text-align: center;
+  padding: 40px 20px;
 `;
