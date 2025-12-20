@@ -47,6 +47,10 @@ export default function BlamePage() {
   };
 
   const handleNextStep = () => {
+    if (!id) {
+      console.error('Repository ID is missing');
+      return;
+    }
     router.push(`/repo/${id}/court/result`);
   };
 

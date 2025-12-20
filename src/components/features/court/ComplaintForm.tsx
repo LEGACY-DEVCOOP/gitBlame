@@ -30,6 +30,10 @@ export default function ComplaintForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!id) {
+      console.error('Repository ID is missing');
+      return;
+    }
     router.push(`/repo/${id}/court/summary`);
   };
 

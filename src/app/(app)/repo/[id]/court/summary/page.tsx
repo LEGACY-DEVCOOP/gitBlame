@@ -150,6 +150,10 @@ export default function CourtSummaryPage() {
   const id = params?.id;
 
   const handleGoBlame = () => {
+    if (!id) {
+      console.error('Repository ID is missing');
+      return;
+    }
     router.push(`/repo/${id}/court/blame`);
   };
 
