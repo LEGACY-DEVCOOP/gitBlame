@@ -10,7 +10,6 @@ import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCreateJudgment } from '@/hooks/queries/useJudgments';
-
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
   { value: '3', label: '최근 3일 이내' },

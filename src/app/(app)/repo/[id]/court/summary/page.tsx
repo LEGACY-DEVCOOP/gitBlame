@@ -8,8 +8,8 @@ import SuspectVerdictList from '@/components/features/court/summary/SuspectVerdi
 import ResponsibilityPieChart from '@/components/features/court/summary/ResponsibilityPieChart';
 import RelatedCommitTimeline from '@/components/features/court/summary/RelatedCommitTimeline';
 import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Courthouse from '../../../../../public/assets/Courthouse';
+import { useRouter, useParams } from 'next/navigation';
+import Courthouse from '../../../../../../../public/assets/Courthouse';
 import { toPng } from 'html-to-image';
 
 const MOCK_DATA = {
@@ -146,8 +146,15 @@ export default function CourtSummaryPage() {
     }
   };
 
+  const params = useParams();
+  const id = params?.id;
+
   const handleGoBlame = () => {
-    router.push('/blame');
+    if (!id) {
+      console.error('Repository ID is missing');
+      return;
+    }
+    router.push(`/repo/${id}/court/blame`);
   };
 
   return (
@@ -262,6 +269,7 @@ const BlameButton = styled.button`
   font-weight: 800;
   cursor: pointer;
   border-radius: 12px;
+  white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
@@ -281,6 +289,7 @@ const CopyButton = styled.button`
   font-weight: 800;
   cursor: pointer;
   border-radius: 12px;
+  white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
@@ -299,6 +308,7 @@ const DownloadButton = styled.button`
   font-weight: 800;
   cursor: pointer;
   border-radius: 12px;
+  white-space: nowrap;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(8px);
 

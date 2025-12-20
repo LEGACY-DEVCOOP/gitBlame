@@ -144,6 +144,11 @@ export const githubApi = {
     return data.items;
   },
 
+  getRepo: async (id: string): Promise<Repository> => {
+    const { data } = await apiClient.get<Repository>(`/github/repos/${id}`);
+    return data;
+  },
+
   getContributors: async (
     owner: string,
     repo: string

@@ -4,18 +4,29 @@ import styled from '@emotion/styled';
 import Image from 'next/image';
 import color from '@/styles/color';
 import font from '@/styles/font';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import {
+  useRouter,
+  usePathname,
+  useParams,
+  useSearchParams,
+} from 'next/navigation';
 import { useUser } from '@/hooks/queries/useAuth';
+import { useRepo } from '@/hooks/queries/useGithub';
 
 export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
+  const params = useParams();
   const searchParams = useSearchParams();
   const { data: user } = useUser();
+  const id = params?.id as string | undefined;
+
+  const { data: repo } = useRepo(id);
 
   const isRepoDetailPage = pathname?.startsWith('/repo/');
+  const nameFromQuery = searchParams?.get('name');
   const repoName = isRepoDetailPage
-    ? searchParams?.get('name') || 'Repository'
+    ? nameFromQuery || repo?.full_name || repo?.name || 'Repository'
     : null;
 
   return (
