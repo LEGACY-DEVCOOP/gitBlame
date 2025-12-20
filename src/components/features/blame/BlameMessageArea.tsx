@@ -91,7 +91,7 @@ const ContentWrapper = styled.div`
   z-index: 1;
 `;
 
-const MessageLine = styled.p`
+const MessageLine = styled.div`
   ${font.p1}
   color: ${color.white};
   margin: 0;

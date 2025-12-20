@@ -8,7 +8,7 @@ import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
@@ -25,10 +25,16 @@ export default function ComplaintForm() {
   });
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/court/summary');
+    if (!id) {
+      console.error('Repository ID is missing');
+      return;
+    }
+    router.push(`/repo/${id}/court/summary`);
   };
 
   return (

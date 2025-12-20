@@ -10,7 +10,7 @@ import IntensitySelector, {
   Intensity,
 } from '@/components/features/blame/IntensitySelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 const MOCK_SUSPECT = {
   name: 'craftmanship',
@@ -29,6 +29,8 @@ const BLAME_MESSAGES: Record<Intensity, string> = {
 
 export default function BlamePage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id;
   const [intensity, setIntensity] = useState<Intensity>('mild');
   const contentRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +47,11 @@ export default function BlamePage() {
   };
 
   const handleNextStep = () => {
-    router.push('/result');
+    if (!id) {
+      console.error('Repository ID is missing');
+      return;
+    }
+    router.push(`/repo/${id}/court/result`);
   };
 
   return (

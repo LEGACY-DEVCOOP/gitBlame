@@ -18,6 +18,14 @@ export const useRepos = (params?: RepoParams) => {
   });
 };
 
+export const useRepo = (id: string | undefined) => {
+  return useQuery({
+    queryKey: [...GITHUB_KEYS.all, 'repo', id],
+    queryFn: () => githubApi.getRepo(id!),
+    enabled: !!id,
+  });
+};
+
 export const useContributors = (owner: string, repo: string) => {
   return useQuery({
     queryKey: GITHUB_KEYS.contributors(owner, repo),
