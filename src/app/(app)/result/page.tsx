@@ -96,8 +96,13 @@ export default function ResultPage() {
           url: window.location.href,
         });
       } catch (err) {
+        // 사용자가 공유를 취소한 경우 fallback하지 않음
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log('Share cancelled by user');
+          return;
+        }
         console.error('Share failed:', err);
-        // Web Share API 실패 시 클립보드 fallback
+        // 실제 에러인 경우에만 클립보드 fallback
         await copyToClipboard(text);
       }
     } else {
