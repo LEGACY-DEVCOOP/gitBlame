@@ -1166,6 +1166,15 @@ class Output {
     this.simulation.update();
     this.render();
   }
+  updatePalette(paletteTex: THREE.DataTexture) {
+    const material = this.output.material as THREE.RawShaderMaterial;
+    const oldTex = material.uniforms.palette.value as THREE.DataTexture;
+    if (oldTex && oldTex !== paletteTex) {
+      oldTex.dispose();
+    }
+    material.uniforms.palette.value = paletteTex;
+    material.needsUpdate = true;
+  }
 }
 
 interface WebGLManagerProps {
@@ -1248,6 +1257,9 @@ class WebGLManager {
   resize() {
     this.common.resize();
     if (this.output) this.output.resize();
+  }
+  updatePalette(paletteTex: THREE.DataTexture) {
+    if (this.output) this.output.updatePalette(paletteTex);
   }
   render() {
     if (this.autoDriver) this.autoDriver.update();
@@ -1434,25 +1446,8 @@ export default function LiquidEther({
       }
       webglRef.current = null;
     };
-  }, [
-    BFECC,
-    cursorSize,
-    dt,
-    isBounce,
-    isViscous,
-    iterationsPoisson,
-    iterationsViscous,
-    mouseForce,
-    resolution,
-    viscous,
-    colors,
-    autoDemo,
-    autoSpeed,
-    autoIntensity,
-    takeoverDuration,
-    autoResumeDelay,
-    autoRampDuration,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   useEffect(() => {
     const webgl = webglRef.current;
@@ -1486,6 +1481,10 @@ export default function LiquidEther({
     if (resolution !== prevRes) {
       sim.resize();
     }
+
+    // Update palette if colors changed
+    const paletteTex = makePaletteTexture(colors);
+    webgl.updatePalette(paletteTex);
   }, [
     mouseForce,
     cursorSize,
@@ -1497,6 +1496,7 @@ export default function LiquidEther({
     BFECC,
     resolution,
     isBounce,
+    JSON.stringify(colors),
     autoDemo,
     autoSpeed,
     autoIntensity,
