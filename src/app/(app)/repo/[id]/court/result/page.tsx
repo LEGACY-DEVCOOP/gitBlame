@@ -255,9 +255,6 @@ export default function ResultPage() {
           <ActionButton variant="ghost" onClick={handleDownload}>
             <span style={{ color: color.primary }}>BLAME</span> 이미지 저장
           </ActionButton>
-          <ActionButton variant="primary" onClick={handleShare}>
-            결과 공유
-          </ActionButton>
         </ActionButtons>
       </MainContent>
     </PageContainer>
@@ -306,7 +303,7 @@ const ActionButtons = styled.div`
 `;
 
 const ActionButton = styled(Button)`
-  flex: 1;
+  width: 100%;
   height: 56px;
   ${font.H2}
   font-weight: 700;
