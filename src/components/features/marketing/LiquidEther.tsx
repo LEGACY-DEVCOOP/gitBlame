@@ -144,6 +144,7 @@ class MouseClass {
   _onTouchMove: (e: TouchEvent) => void;
   _onTouchEnd: () => void;
   _onDocumentLeave: () => void;
+  firstUpdate = true;
 
   constructor() {
     this._onMouseMove = this.onDocumentMouseMove.bind(this);
@@ -284,9 +285,15 @@ class MouseClass {
         this.coords.copy(this.takeoverFrom).lerp(this.takeoverTo, k);
       }
     }
+
+    if (this.firstUpdate) {
+      this.coords_old.copy(this.coords);
+      this.firstUpdate = false;
+    }
+
     this.diff.subVectors(this.coords, this.coords_old);
     this.coords_old.copy(this.coords);
-    if (this.coords_old.x === 0 && this.coords_old.y === 0) this.diff.set(0, 0);
+
     if (this.isAutoActive && !this.takeoverActive)
       this.diff.multiplyScalar(this.autoIntensity);
   }
@@ -1434,7 +1441,7 @@ export default function LiquidEther({
     resizeObserverRef.current = ro;
 
     return () => {
-      // Use local references for cleanup
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       const currentRaf = rafRef.current;
       if (currentRaf) cancelAnimationFrame(currentRaf);
 
