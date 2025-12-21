@@ -1115,6 +1115,12 @@ class Simulation {
       this.pressure?.updatePressure({ vel, pressure });
     }
   }
+  dispose() {
+    for (const key in this.fbos) {
+      this.fbos[key]?.dispose();
+      this.fbos[key] = null;
+    }
+  }
 }
 
 class Output {
@@ -1174,6 +1180,16 @@ class Output {
     }
     material.uniforms.palette.value = paletteTex;
     material.needsUpdate = true;
+  }
+  dispose() {
+    this.simulation.dispose();
+    const material = this.output.material as THREE.RawShaderMaterial;
+    const paletteTex = material.uniforms.palette.value as THREE.DataTexture;
+    if (paletteTex) {
+      paletteTex.dispose();
+    }
+    this.output.geometry.dispose();
+    material.dispose();
   }
 }
 
@@ -1290,13 +1306,16 @@ class WebGLManager {
       window.removeEventListener('resize', this._resize);
       document.removeEventListener('visibilitychange', this._onVisibility);
       this.mouse.dispose();
+      if (this.output) {
+        this.output.dispose();
+      }
       if (this.common.renderer) {
         const canvas = this.common.renderer.domElement;
         if (canvas && canvas.parentNode) canvas.parentNode.removeChild(canvas);
         this.common.renderer.dispose();
       }
-    } catch (_e) {
-      // ignore
+    } catch (e) {
+      console.error('Error during WebGLManager disposal:', e);
     }
   }
 }
@@ -1426,8 +1445,8 @@ export default function LiquidEther({
       if (currentRo) {
         try {
           currentRo.disconnect();
-        } catch (_e) {
-          // ignore
+        } catch (e) {
+          console.error('Error disconnecting ResizeObserver:', e);
         }
       }
 
@@ -1435,8 +1454,8 @@ export default function LiquidEther({
       if (currentIo) {
         try {
           currentIo.disconnect();
-        } catch (_e) {
-          // ignore
+        } catch (e) {
+          console.error('Error disconnecting IntersectionObserver:', e);
         }
       }
 
