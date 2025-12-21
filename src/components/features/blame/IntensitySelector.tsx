@@ -106,7 +106,7 @@ const Grid = styled.div`
   }
 `;
 
-const ProtocolCard = styled.div<{ isSelected: boolean; activeColor: string }>`
+const ProtocolCard = styled.button<{ isSelected: boolean; activeColor: string }>`
   position: relative;
   background: ${(props) =>
     props.isSelected
@@ -124,11 +124,9 @@ const ProtocolCard = styled.div<{ isSelected: boolean; activeColor: string }>`
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
-  /* Button 요소를 위한 기본 스타일 초기화 */
-  &[type='button'] {
-    font: inherit;
-    text-align: left;
-  }
+  border: none;
+  text-align: left;
+  font: inherit;
 
   &:hover {
     background: rgba(255, 255, 255, 0.06);
