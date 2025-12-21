@@ -56,6 +56,57 @@ export interface CommitParams {
   per_page?: number;
 }
 
+// Judgments Types
+export interface Suspect {
+  username: string;
+  responsibility: number;
+  reason: string;
+  last_commit_msg?: string;
+}
+
+export interface Judgment {
+  id: string;
+  case_number: string;
+  repo_owner: string;
+  repo_name: string;
+  title: string;
+  description: string;
+  file_path: string;
+  period_days: number;
+  status: 'pending' | 'completed';
+  suspects?: Suspect[];
+  created_at: string;
+}
+
+export interface CreateJudgmentRequest {
+  repo_owner: string;
+  repo_name: string;
+  title: string;
+  description: string;
+  file_path: string;
+  period_days: number;
+}
+
+export interface Blame {
+  id: string;
+  judgment_id: string;
+  target_username: string;
+  message: string;
+  intensity: 'mild' | 'medium' | 'spicy';
+  image_url?: string;
+  created_at: string;
+}
+
+export interface CreateBlameRequest {
+  intensity: 'mild' | 'medium' | 'spicy';
+}
+
+export interface JudgmentListParams {
+  status?: 'pending' | 'completed';
+  page?: number;
+  per_page?: number;
+}
+
 // Authentication APIs
 export const authApi = {
   login: () => {
@@ -119,5 +170,71 @@ export const githubApi = {
       { params }
     );
     return data.commits || [];
+  },
+};
+
+// Judgments APIs
+export const judgmentsApi = {
+  // 고소장 접수 (판결 생성)
+  create: async (request: CreateJudgmentRequest): Promise<Judgment> => {
+    const { data } = await apiClient.post<Judgment>('/judgments', request);
+    return data;
+  },
+
+  // 판결 목록 조회
+  getList: async (params?: JudgmentListParams): Promise<Judgment[]> => {
+    const { data } = await apiClient.get<{ items: Judgment[] }>('/judgments', {
+      params,
+    });
+    return data.items || [];
+  },
+
+  // 판결 상세 조회
+  getById: async (judgmentId: string): Promise<Judgment> => {
+    const { data } = await apiClient.get<Judgment>(`/judgments/${judgmentId}`);
+    return data;
+  },
+
+  // AI 용의자 분석
+  analyze: async (judgmentId: string): Promise<Judgment> => {
+    const { data } = await apiClient.post<Judgment>(
+      `/judgments/${judgmentId}/analyze`
+    );
+    return data;
+  },
+
+  // 판결 삭제
+  delete: async (judgmentId: string): Promise<void> => {
+    await apiClient.delete(`/judgments/${judgmentId}`);
+  },
+
+  // 최종 판결 내리기 (Blame 생성)
+  createBlame: async (
+    judgmentId: string,
+    request: CreateBlameRequest
+  ): Promise<Blame> => {
+    const { data } = await apiClient.post<Blame>(
+      `/judgments/${judgmentId}/blame`,
+      request
+    );
+    return data;
+  },
+
+  // 판결 결과 조회
+  getBlame: async (judgmentId: string): Promise<Blame> => {
+    const { data } = await apiClient.get<Blame>(
+      `/judgments/${judgmentId}/blame`
+    );
+    return data;
+  },
+
+  // 판결문 이미지 생성
+  createBlameImage: async (
+    judgmentId: string
+  ): Promise<{ image_url: string }> => {
+    const { data } = await apiClient.post<{ image_url: string }>(
+      `/judgments/${judgmentId}/blame/image`
+    );
+    return data;
   },
 };
