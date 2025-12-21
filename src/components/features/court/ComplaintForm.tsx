@@ -13,6 +13,8 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCreateJudgment } from '@/hooks/queries/useJudgments';
 import { ObjectionPlayer } from 'objection-irigari';
 import { useUser } from '@/hooks/queries/useAuth';
+import { useFileTree } from '@/hooks/queries/useGithub';
+import { useVerdictStore } from '@/store';
 
 type ObjectionScene = {
   character: 'phoenix' | 'miles';
@@ -38,11 +40,13 @@ export default function ComplaintForm() {
   const [pendingJudgmentId, setPendingJudgmentId] = useState<string | null>(
     null
   );
+  const [isAwaitingJudgmentId, setIsAwaitingJudgmentId] = useState(false);
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
   const { data: user } = useUser();
+  const verdictStore = useVerdictStore();
   const createJudgment = useCreateJudgment();
 
   // Get repo info from URL params
@@ -60,14 +64,22 @@ export default function ComplaintForm() {
     return typeof id === 'string' ? id : '';
   }, [params]);
 
+  // Prefetch file tree as soon as form is mounted (so /tree 호출을 미리 수행)
+  useFileTree(owner, repo, undefined, { enabled: !!owner && !!repo });
+
   const currentScene = useMemo(
     () => objectionScenes[currentSceneIndex],
     [objectionScenes, currentSceneIndex]
   );
 
-  const startObjectionSequence = (judgmentId: string) => {
+  const startObjectionSequence = (judgmentId: string | null = null) => {
     const milesLines = ['어디 한 번 해봐!', '두렵지가 않구나...'];
     const milesLine = milesLines[Math.floor(Math.random() * milesLines.length)];
+    const accusedFromStore =
+      verdictStore.caseInfo?.accused?.[0] ||
+      verdictStore.suspects?.[0]?.name ||
+      '';
+    const milesNameplate = accusedFromStore || repo || '피고소인';
 
     const scenes: ObjectionScene[] = [
       {
@@ -77,7 +89,7 @@ export default function ComplaintForm() {
       },
       {
         character: 'miles',
-        nameplate: repo || owner || '피고소인',
+        nameplate: milesNameplate,
         text: milesLine,
       },
     ];
@@ -85,6 +97,7 @@ export default function ComplaintForm() {
     setPendingJudgmentId(judgmentId);
     setObjectionScenes(scenes);
     setCurrentSceneIndex(0);
+    setIsAwaitingJudgmentId(false);
   };
 
   const handleSceneComplete = () => {
@@ -100,7 +113,8 @@ export default function ComplaintForm() {
         `/repo/${repoId}/court/summary?judgmentId=${pendingJudgmentId}`
       );
     } else {
-      console.warn('Missing repoId or judgmentId for navigation');
+      setIsAwaitingJudgmentId(true);
+      return;
     }
     setObjectionScenes([]);
     setPendingJudgmentId(null);
@@ -119,6 +133,8 @@ export default function ComplaintForm() {
       return;
     }
 
+    startObjectionSequence(null);
+
     try {
       const judgment = await createJudgment.mutateAsync({
         repo_owner: owner,
@@ -129,10 +145,20 @@ export default function ComplaintForm() {
         period_days: parseInt(formData.period, 10),
       });
 
-      startObjectionSequence(judgment.id);
+      setPendingJudgmentId(judgment.id);
+
+      // If 애니메이션이 이미 끝났다면 여기서 바로 이동
+      if (isAwaitingJudgmentId) {
+        router.push(`/repo/${repoId}/court/summary?judgmentId=${judgment.id}`);
+        setObjectionScenes([]);
+        setIsAwaitingJudgmentId(false);
+      }
     } catch (error) {
       console.error('Failed to create judgment:', error);
       alert('고소장 접수에 실패했습니다. 다시 시도해주세요.');
+      setObjectionScenes([]);
+      setPendingJudgmentId(null);
+      setIsAwaitingJudgmentId(false);
     }
   };
 

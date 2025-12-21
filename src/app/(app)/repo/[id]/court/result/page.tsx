@@ -9,7 +9,7 @@ import { toPng } from 'html-to-image';
 import VerdictHeader from '@/components/features/result/VerdictHeader';
 import CulpritDisplay from '@/components/features/result/CulpritDisplay';
 import StickerSelector from '@/components/features/result/StickerSelector';
-import { useBlame, useCreateBlameImage } from '@/hooks/queries/useJudgments';
+import { useBlame } from '@/hooks/queries/useJudgments';
 import { useSearchParams, useRouter, useParams } from 'next/navigation';
 import { useVerdictStore } from '@/store';
 
@@ -27,12 +27,9 @@ export default function ResultPage() {
   const params = useParams();
 
   const judgmentId = searchParams?.get('judgmentId') || '';
-  const initialImageUrl = searchParams?.get('imageUrl') || '';
   const repoId = params?.id as string;
 
   const [stickers, setStickers] = useState<Sticker[]>([]);
-  const [imageUrl, setImageUrl] = useState(initialImageUrl);
-  const hasRequestedImageRef = useRef(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -46,13 +43,6 @@ export default function ResultPage() {
     isLoading: isBlameLoading,
     error: blameError,
   } = useBlame(judgmentId);
-  const createBlameImage = useCreateBlameImage();
-
-  useEffect(() => {
-    if (blame?.image_url) {
-      setImageUrl(blame.image_url);
-    }
-  }, [blame]);
 
   // Redirect if store is empty
   useEffect(() => {
@@ -61,16 +51,6 @@ export default function ResultPage() {
       router.push(`/repo/${repoId}/court/summary?judgmentId=${judgmentId}`);
     }
   }, [storedCaseInfo, isBlameLoading, judgmentId, router, repoId]);
-
-  useEffect(() => {
-    if (!imageUrl && blame?.id && judgmentId && !hasRequestedImageRef.current) {
-      hasRequestedImageRef.current = true;
-      createBlameImage
-        .mutateAsync(judgmentId)
-        .then((result) => setImageUrl(result.image_url))
-        .catch((err) => console.error('Blame image creation failed:', err));
-    }
-  }, [imageUrl, blame, judgmentId, createBlameImage]);
 
   const verdictHeaderInfo = useMemo(() => {
     if (!storedCaseInfo) return null;
@@ -117,16 +97,6 @@ export default function ResultPage() {
   const handleDownload = async () => {
     if (!culprit) return;
 
-    if (imageUrl) {
-      const link = document.createElement('a');
-      link.download = `blame_result_${culprit.name}.png`;
-      link.href = imageUrl;
-      link.target = '_blank';
-      link.rel = 'noreferrer';
-      link.click();
-      return;
-    }
-
     if (!contentRef.current) return;
 
     const excludeElements = contentRef.current.querySelectorAll(
@@ -160,6 +130,8 @@ export default function ResultPage() {
     }
   };
 
+  const [isSharing, setIsSharing] = useState(false);
+
   const handleShare = async () => {
     const shareText =
       verdictHeaderInfo && culprit
@@ -171,7 +143,13 @@ export default function ResultPage() {
       return;
     }
 
+    if (isSharing) {
+      console.warn('Share already in progress, ignoring new request');
+      return;
+    }
+
     if (navigator.share) {
+      setIsSharing(true);
       try {
         await navigator.share({
           title: 'GitBlame 판결 결과',
@@ -181,9 +159,12 @@ export default function ResultPage() {
         return;
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
+          setIsSharing(false);
           return;
         }
         console.error('Share failed:', err);
+      } finally {
+        setIsSharing(false);
       }
     }
 
@@ -215,7 +196,7 @@ export default function ResultPage() {
     }
   };
 
-  const isLoading = isBlameLoading || createBlameImage.isPending;
+  const isLoading = isBlameLoading;
 
   if (!judgmentId) {
     return (

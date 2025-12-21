@@ -13,7 +13,6 @@ import Button from '@/components/common/Button/Button';
 import {
   useBlame,
   useCreateBlame,
-  useCreateBlameImage,
   useJudgment,
 } from '@/hooks/queries/useJudgments';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
@@ -43,7 +42,6 @@ export default function BlamePage() {
   } = useBlame(judgmentId, { enabled: false });
 
   const createBlame = useCreateBlame();
-  const createBlameImage = useCreateBlameImage();
   const [blameData, setBlameData] = useState<typeof blame | null>(null);
   const { data: user } = useUser();
 
@@ -143,33 +141,18 @@ export default function BlamePage() {
       return;
     }
 
-    try {
-      let imageUrl = currentBlame.image_url;
-      if (!imageUrl) {
-        const imageResult = await createBlameImage.mutateAsync(judgmentId);
-        imageUrl = imageResult.image_url;
-      }
+    const query = new URLSearchParams({
+      judgmentId,
+      intensity,
+    });
 
-      const query = new URLSearchParams({
-        judgmentId,
-        intensity,
-      });
-      if (imageUrl) {
-        query.set('imageUrl', imageUrl);
-      }
-
-      router.push(`/repo/${repoId}/court/result?${query.toString()}`);
-    } catch (err) {
-      console.error('Blame image generation failed:', err);
-      alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
-    }
+    router.push(`/repo/${repoId}/court/result?${query.toString()}`);
   };
 
   const isLoading =
     isJudgmentLoading ||
     isBlameLoading ||
-    createBlame.isPending ||
-    createBlameImage.isPending;
+    createBlame.isPending;
 
   if (!judgmentId) {
     return (
@@ -233,7 +216,7 @@ export default function BlamePage() {
               variant="primary"
               fullWidth
               onClick={handleNextStep}
-              disabled={createBlame.isPending || createBlameImage.isPending}
+              disabled={createBlame.isPending}
             >
               이미지 생성
             </ActionButton>

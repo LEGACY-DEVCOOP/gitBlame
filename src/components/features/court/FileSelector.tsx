@@ -74,7 +74,7 @@ const FileSelector = ({
     data: fileTreeData,
     isLoading,
     error,
-  } = useFileTree(owner, repo, undefined, { enabled: isOpen });
+  } = useFileTree(owner, repo, undefined, { enabled: !!owner && !!repo });
 
   const fileTree = useMemo(() => {
     if (!fileTreeData) return null;
@@ -219,14 +219,14 @@ const Footer = styled.div`
   background-color: ${color.darkgray};
 `;
 
-const LoadingMessage = styled.div`
+const ErrorMessage = styled.div`
   ${font.p1}
-  color: ${color.lightgray};
+  color: ${color.primary};
   text-align: center;
   padding: 40px 20px;
 `;
 
-const ErrorMessage = styled.div`
+const LoadingMessage = styled.div`
   ${font.p1}
   color: ${color.primary};
   text-align: center;
