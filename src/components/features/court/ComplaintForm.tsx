@@ -3,14 +3,22 @@
 import styled from '@emotion/styled';
 import { useState, useMemo } from 'react';
 import color from '@/styles/color';
+import font from '@/styles/font';
 import FormItem from '@/components/common/FormItem/FormItem';
 import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCreateJudgment } from '@/hooks/queries/useJudgments';
+import { ObjectionPlayer } from 'objection-irigari';
+import { useUser } from '@/hooks/queries/useAuth';
 
+type ObjectionScene = {
+  character: 'phoenix' | 'miles';
+  nameplate: string;
+  text: string;
+};
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
   { value: '3', label: '최근 3일 이내' },
@@ -25,15 +33,20 @@ export default function ComplaintForm() {
     description: '',
     period: '7',
   });
+  const [objectionScenes, setObjectionScenes] = useState<ObjectionScene[]>([]);
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [pendingJudgmentId, setPendingJudgmentId] = useState<string | null>(
+    null
+  );
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const params = useParams();
+  const { data: user } = useUser();
   const createJudgment = useCreateJudgment();
 
   // Get repo info from URL params
   const repoName = searchParams?.get('name') || '';
-  const repoIdFromParams = params?.id as string | undefined;
   const [owner, repo] = useMemo(() => {
     const parts = repoName.split('/');
     if (parts.length !== 2) {
@@ -42,9 +55,59 @@ export default function ComplaintForm() {
     return parts;
   }, [repoName]);
 
+  const repoId = useMemo(() => {
+    const id = params?.id;
+    return typeof id === 'string' ? id : '';
+  }, [params]);
+
+  const currentScene = useMemo(
+    () => objectionScenes[currentSceneIndex],
+    [objectionScenes, currentSceneIndex]
+  );
+
+  const startObjectionSequence = (judgmentId: string) => {
+    const milesLines = ['어디 한 번 해봐!', '두렵지가 않구나...'];
+    const milesLine = milesLines[Math.floor(Math.random() * milesLines.length)];
+
+    const scenes: ObjectionScene[] = [
+      {
+        character: 'phoenix',
+        nameplate: user?.username || 'Phoenix Wright',
+        text: formData.title,
+      },
+      {
+        character: 'miles',
+        nameplate: repo || owner || '피고소인',
+        text: milesLine,
+      },
+    ];
+
+    setPendingJudgmentId(judgmentId);
+    setObjectionScenes(scenes);
+    setCurrentSceneIndex(0);
+  };
+
+  const handleSceneComplete = () => {
+    const nextIndex = currentSceneIndex + 1;
+    if (nextIndex < objectionScenes.length) {
+      setCurrentSceneIndex(nextIndex);
+      return;
+    }
+
+    // Sequence finished -> navigate to summary
+    if (repoId && pendingJudgmentId) {
+      router.push(
+        `/repo/${repoId}/court/summary?judgmentId=${pendingJudgmentId}`
+      );
+    } else {
+      console.warn('Missing repoId or judgmentId for navigation');
+    }
+    setObjectionScenes([]);
+    setPendingJudgmentId(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     // Validate form
     if (!formData.title || !formData.filePath || !formData.description) {
       alert('모든 필드를 입력해주세요.');
@@ -66,18 +129,7 @@ export default function ComplaintForm() {
         period_days: parseInt(formData.period, 10),
       });
 
-      // Navigate to court summary page
-      if (repoIdFromParams) {
-        router.push(
-          `/repo/${repoIdFromParams}/court/summary?judgmentId=${judgment.id}`
-        );
-      } else {
-        // If accessed from standalone /court page, still go to repo-specific summary
-        // We need to get the repo ID from the judgment response
-        // For now, redirect to main page with success message
-        alert('고소장이 성공적으로 접수되었습니다!');
-        router.push('/main');
-      }
+      startObjectionSequence(judgment.id);
     } catch (error) {
       console.error('Failed to create judgment:', error);
       alert('고소장 접수에 실패했습니다. 다시 시도해주세요.');
@@ -154,6 +206,24 @@ export default function ComplaintForm() {
         owner={owner}
         repo={repo}
       />
+
+      {currentScene && (
+        <ObjectionOverlay>
+          <PlayerWrapper>
+            <ObjectionPlayer
+              key={`${currentScene.character}-${currentSceneIndex}`}
+              character={currentScene.character}
+              nameplate={currentScene.nameplate}
+              text={currentScene.text}
+              assetsBasePath="/objection-assets"
+              onComplete={handleSceneComplete}
+            />
+          </PlayerWrapper>
+          <SkipButton type="button" onClick={handleSceneComplete}>
+            건너뛰기
+          </SkipButton>
+        </ObjectionOverlay>
+      )}
     </FormCard>
   );
 }
@@ -182,4 +252,42 @@ const Form = styled.form`
 const FileInputWrapper = styled.div`
   position: relative;
   width: 100%;
+`;
+
+const ObjectionOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 2000;
+`;
+
+const PlayerWrapper = styled.div`
+  width: min(900px, 90vw);
+  height: min(540px, 70vh);
+  border: 1px solid ${color.gray3};
+  border-radius: 16px;
+  overflow: hidden;
+  background: ${color.darkgray};
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+`;
+
+const SkipButton = styled.button`
+  ${font.p2}
+  color: ${color.lightgray};
+  background: transparent;
+  border: 1px dashed ${color.gray3};
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${color.white};
+    border-color: ${color.white};
+  }
 `;

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Standalone Objection.lol Scene Player" />
+
+    <style>
+      html,
+      body,
+      #root {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: black; /* Add a black background */
+      }
+      /* This targets the container of the buttons at the bottom right */
+      /* It's a bit generic, so it might hide other things if the structure changes */
+      #root > div > div:nth-child(2) {
+        display: none !important;
+      }
+    </style>
+
+    <script>
+      window.OBJECTION_EXPORT_MODE = true;
+      window.locale = 'en';
+    </script>
+
+    <script defer src="./project.js"></script>
+    <script defer src="./assets.js"></script>
+    <script defer src="./title.js"></script>
+    <script defer src="./js/export.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

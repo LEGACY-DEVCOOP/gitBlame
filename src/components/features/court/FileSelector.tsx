@@ -70,7 +70,11 @@ const FileSelector = ({
   repo,
 }: FileSelectorProps) => {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
-  const { data: fileTreeData, isLoading, error } = useFileTree(owner, repo);
+  const {
+    data: fileTreeData,
+    isLoading,
+    error,
+  } = useFileTree(owner, repo, undefined, { enabled: isOpen });
 
   const fileTree = useMemo(() => {
     if (!fileTreeData) return null;

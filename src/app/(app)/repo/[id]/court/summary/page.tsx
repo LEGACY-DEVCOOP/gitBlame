@@ -7,7 +7,7 @@ import CaseSummaryInfo from '@/components/features/court/summary/CaseSummaryInfo
 import SuspectVerdictList from '@/components/features/court/summary/SuspectVerdictList';
 import ResponsibilityPieChart from '@/components/features/court/summary/ResponsibilityPieChart';
 import RelatedCommitTimeline from '@/components/features/court/summary/RelatedCommitTimeline';
-import { useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Courthouse from '../../../../../../../public/assets/Courthouse';
 import { toPng } from 'html-to-image';
@@ -15,6 +15,12 @@ import { useJudgment, useAnalyzeJudgment } from '@/hooks/queries/useJudgments';
 import { useCommits } from '@/hooks/queries/useGithub';
 import { useUser } from '@/hooks/queries/useAuth';
 import { useVerdictStore } from '@/store';
+import { ObjectionPlayer } from 'objection-irigari';
+
+type JudgeScene = {
+  character: 'judge1' | 'judge3';
+  text: string;
+};
 
 const MOCK_DATA = {
   caseInfo: {
@@ -81,6 +87,7 @@ export default function CourtSummaryPage() {
   const { data: judgment, isLoading, error } = useJudgment(judgmentId || '');
   const analyzeJudgment = useAnalyzeJudgment();
   const { data: user } = useUser();
+  const [judgeScene, setJudgeScene] = useState<JudgeScene | null>(null);
 
   // Parse owner/repo from judgment data
   const [owner, repo] = useMemo(() => {
@@ -244,7 +251,21 @@ export default function CourtSummaryPage() {
       console.error('Repository ID or Judgment ID is missing');
       return;
     }
-    router.push(`/repo/${repoId}/court/blame?judgmentId=${judgmentId}`);
+    const judgeCharacters: JudgeScene['character'][] = ['judge1', 'judge3'];
+    const judgeLines = ['세상에 이럴수가...', '저런', '이런', '에휴'];
+    const character =
+      judgeCharacters[Math.floor(Math.random() * judgeCharacters.length)];
+    const text = judgeLines[Math.floor(Math.random() * judgeLines.length)];
+    setJudgeScene({ character, text });
+  };
+
+  const handleJudgeSceneComplete = () => {
+    if (repoId && judgmentId) {
+      router.push(`/repo/${repoId}/court/blame?judgmentId=${judgmentId}`);
+    } else {
+      console.warn('Missing repoId or judgmentId for navigation');
+    }
+    setJudgeScene(null);
   };
 
   if (isLoading || analyzeJudgment.isPending) {
@@ -305,6 +326,24 @@ export default function CourtSummaryPage() {
           </DownloadButton>
         </ButtonGroup>
       </MainContent>
+
+      {judgeScene && (
+        <JudgeOverlay>
+          <JudgePlayerWrapper>
+            <ObjectionPlayer
+              key={judgeScene.character}
+              character={judgeScene.character}
+              nameplate="판사"
+              text={judgeScene.text}
+              assetsBasePath="/objection-assets"
+              onComplete={handleJudgeSceneComplete}
+            />
+          </JudgePlayerWrapper>
+          <SkipButton type="button" onClick={handleJudgeSceneComplete}>
+            건너뛰기
+          </SkipButton>
+        </JudgeOverlay>
+      )}
     </PageContainer>
   );
 }
@@ -371,6 +410,44 @@ const ButtonGroup = styled.div`
   @media (max-width: 600px) {
     flex-direction: column;
     align-items: stretch;
+  }
+`;
+
+const JudgeOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 3000;
+`;
+
+const JudgePlayerWrapper = styled.div`
+  width: min(900px, 90vw);
+  height: min(540px, 70vh);
+  border: 1px solid ${color.gray3};
+  border-radius: 16px;
+  overflow: hidden;
+  background: ${color.darkgray};
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+`;
+
+const SkipButton = styled.button`
+  ${font.p2}
+  color: ${color.lightgray};
+  background: transparent;
+  border: 1px dashed ${color.gray3};
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${color.white};
+    border-color: ${color.white};
   }
 `;
 

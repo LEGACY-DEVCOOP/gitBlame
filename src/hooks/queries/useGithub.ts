@@ -56,11 +56,12 @@ export const useCommits = (
 export const useFileTree = (
   owner: string,
   repo: string,
-  params?: FileTreeParams
+  params?: FileTreeParams,
+  options?: { enabled?: boolean }
 ) => {
   return useQuery({
     queryKey: GITHUB_KEYS.fileTree(owner, repo, params),
     queryFn: () => githubApi.getFileTree(owner, repo, params),
-    enabled: !!owner && !!repo,
+    enabled: !!owner && !!repo && (options?.enabled ?? true),
   });
 };
