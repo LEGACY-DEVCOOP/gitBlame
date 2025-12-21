@@ -3,13 +3,24 @@
 import styled from '@emotion/styled';
 import { useState, useMemo } from 'react';
 import color from '@/styles/color';
+import font from '@/styles/font';
 import FormItem from '@/components/common/FormItem/FormItem';
 import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useCreateJudgment } from '@/hooks/queries/useJudgments';
+import { ObjectionPlayer } from 'objection-irigari';
+import { useUser } from '@/hooks/queries/useAuth';
+import { useFileTree } from '@/hooks/queries/useGithub';
+import { useVerdictStore } from '@/store';
+
+type ObjectionScene = {
+  character: 'phoenix' | 'miles';
+  nameplate: string;
+  text: string;
+};
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
   { value: '3', label: '최근 3일 이내' },
@@ -24,9 +35,18 @@ export default function ComplaintForm() {
     description: '',
     period: '7',
   });
+  const [objectionScenes, setObjectionScenes] = useState<ObjectionScene[]>([]);
+  const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
+  const [pendingJudgmentId, setPendingJudgmentId] = useState<string | null>(
+    null
+  );
+  const [isAwaitingJudgmentId, setIsAwaitingJudgmentId] = useState(false);
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
+  const { data: user } = useUser();
+  const verdictStore = useVerdictStore();
   const createJudgment = useCreateJudgment();
 
   // Get repo info from URL params
@@ -39,9 +59,69 @@ export default function ComplaintForm() {
     return parts;
   }, [repoName]);
 
+  const repoId = useMemo(() => {
+    const id = params?.id;
+    return typeof id === 'string' ? id : '';
+  }, [params]);
+
+  // Prefetch file tree as soon as form is mounted (so /tree 호출을 미리 수행)
+  useFileTree(owner, repo, undefined, { enabled: !!owner && !!repo });
+
+  const currentScene = useMemo(
+    () => objectionScenes[currentSceneIndex],
+    [objectionScenes, currentSceneIndex]
+  );
+
+  const startObjectionSequence = (judgmentId: string | null = null) => {
+    const milesLines = ['어디 한 번 해봐!', '두렵지가 않구나...'];
+    const milesLine = milesLines[Math.floor(Math.random() * milesLines.length)];
+    const accusedFromStore =
+      verdictStore.caseInfo?.accused?.[0] ||
+      verdictStore.suspects?.[0]?.name ||
+      '';
+    const milesNameplate = accusedFromStore || repo || '피고소인';
+
+    const scenes: ObjectionScene[] = [
+      {
+        character: 'phoenix',
+        nameplate: user?.username || 'Phoenix Wright',
+        text: formData.title,
+      },
+      {
+        character: 'miles',
+        nameplate: milesNameplate,
+        text: milesLine,
+      },
+    ];
+
+    setPendingJudgmentId(judgmentId);
+    setObjectionScenes(scenes);
+    setCurrentSceneIndex(0);
+    setIsAwaitingJudgmentId(false);
+  };
+
+  const handleSceneComplete = () => {
+    const nextIndex = currentSceneIndex + 1;
+    if (nextIndex < objectionScenes.length) {
+      setCurrentSceneIndex(nextIndex);
+      return;
+    }
+
+    // Sequence finished -> navigate to summary
+    if (repoId && pendingJudgmentId) {
+      router.push(
+        `/repo/${repoId}/court/summary?judgmentId=${pendingJudgmentId}`
+      );
+    } else {
+      setIsAwaitingJudgmentId(true);
+      return;
+    }
+    setObjectionScenes([]);
+    setPendingJudgmentId(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     // Validate form
     if (!formData.title || !formData.filePath || !formData.description) {
       alert('모든 필드를 입력해주세요.');
@@ -53,6 +133,8 @@ export default function ComplaintForm() {
       return;
     }
 
+    startObjectionSequence(null);
+
     try {
       const judgment = await createJudgment.mutateAsync({
         repo_owner: owner,
@@ -63,11 +145,20 @@ export default function ComplaintForm() {
         period_days: parseInt(formData.period, 10),
       });
 
-      // Navigate to judgment detail page or summary page
-      router.push(`/judgment/${judgment.id}`);
+      setPendingJudgmentId(judgment.id);
+
+      // If 애니메이션이 이미 끝났다면 여기서 바로 이동
+      if (isAwaitingJudgmentId) {
+        router.push(`/repo/${repoId}/court/summary?judgmentId=${judgment.id}`);
+        setObjectionScenes([]);
+        setIsAwaitingJudgmentId(false);
+      }
     } catch (error) {
       console.error('Failed to create judgment:', error);
       alert('고소장 접수에 실패했습니다. 다시 시도해주세요.');
+      setObjectionScenes([]);
+      setPendingJudgmentId(null);
+      setIsAwaitingJudgmentId(false);
     }
   };
 
@@ -138,7 +229,27 @@ export default function ComplaintForm() {
         isOpen={isFileSelectorOpen}
         onClose={() => setIsFileSelectorOpen(false)}
         onSelect={(path) => setFormData({ ...formData, filePath: path })}
+        owner={owner}
+        repo={repo}
       />
+
+      {currentScene && (
+        <ObjectionOverlay>
+          <PlayerWrapper>
+            <ObjectionPlayer
+              key={`${currentScene.character}-${currentSceneIndex}`}
+              character={currentScene.character}
+              nameplate={currentScene.nameplate}
+              text={currentScene.text}
+              assetsBasePath="/objection-assets"
+              onComplete={handleSceneComplete}
+            />
+          </PlayerWrapper>
+          <SkipButton type="button" onClick={handleSceneComplete}>
+            건너뛰기
+          </SkipButton>
+        </ObjectionOverlay>
+      )}
     </FormCard>
   );
 }
@@ -167,4 +278,42 @@ const Form = styled.form`
 const FileInputWrapper = styled.div`
   position: relative;
   width: 100%;
+`;
+
+const ObjectionOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 2000;
+`;
+
+const PlayerWrapper = styled.div`
+  width: min(900px, 90vw);
+  height: min(540px, 70vh);
+  border: 1px solid ${color.gray3};
+  border-radius: 16px;
+  overflow: hidden;
+  background: ${color.darkgray};
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+`;
+
+const SkipButton = styled.button`
+  ${font.p2}
+  color: ${color.lightgray};
+  background: transparent;
+  border: 1px dashed ${color.gray3};
+  padding: 10px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: ${color.white};
+    border-color: ${color.white};
+  }
 `;

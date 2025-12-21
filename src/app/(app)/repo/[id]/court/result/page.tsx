@@ -1,7 +1,7 @@
 'use client';
 
 import styled from '@emotion/styled';
-import { useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import color from '@/styles/color';
 import font from '@/styles/font';
 import Button from '@/components/common/Button/Button';
@@ -9,6 +9,9 @@ import { toPng } from 'html-to-image';
 import VerdictHeader from '@/components/features/result/VerdictHeader';
 import CulpritDisplay from '@/components/features/result/CulpritDisplay';
 import StickerSelector from '@/components/features/result/StickerSelector';
+import { useBlame } from '@/hooks/queries/useJudgments';
+import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import { useVerdictStore } from '@/store';
 
 interface Sticker {
   id: number;
@@ -18,24 +21,67 @@ interface Sticker {
   rotate: number;
 }
 
-const MOCK_DATA = {
-  caseInfo: {
-    project: 'TERA/sosojung',
-    title: '결제 버튼 클릭 시 500 에러 발생',
-    date: '2025-05-04',
-    caseNumber: '해-1213-1234-1234',
-    complainant: 'sosojung',
-    accused: 'craftmanship, kingofhwang',
-  },
-  culprit: {
-    name: 'craftmanship',
-    percentage: 66,
-  },
-};
-
 export default function ResultPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const params = useParams();
+
+  const judgmentId = searchParams?.get('judgmentId') || '';
+  const repoId = params?.id as string;
+
   const [stickers, setStickers] = useState<Sticker[]>([]);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  const {
+    caseInfo: storedCaseInfo,
+    suspects: storedSuspects,
+    repoFullName,
+  } = useVerdictStore();
+
+  const {
+    data: blame,
+    isLoading: isBlameLoading,
+    error: blameError,
+  } = useBlame(judgmentId);
+
+  // Redirect if store is empty
+  useEffect(() => {
+    if (!isBlameLoading && !storedCaseInfo && judgmentId) {
+      alert('판결 정보가 없습니다. 요약 페이지로 돌아갑니다.');
+      router.push(`/repo/${repoId}/court/summary?judgmentId=${judgmentId}`);
+    }
+  }, [storedCaseInfo, isBlameLoading, judgmentId, router, repoId]);
+
+  const verdictHeaderInfo = useMemo(() => {
+    if (!storedCaseInfo) return null;
+    return {
+      project: repoFullName || '',
+      title: storedCaseInfo.title,
+      date: storedCaseInfo.date,
+      caseNumber: storedCaseInfo.caseNumber,
+      complainant: storedCaseInfo.complainant,
+      accused: storedCaseInfo.accused.join(', ') || '-',
+    };
+  }, [storedCaseInfo, repoFullName]);
+
+  const culprit = useMemo(() => {
+    if (storedSuspects && storedSuspects.length > 0) {
+      const topSuspect = [...storedSuspects].sort(
+        (a, b) => b.percentage - a.percentage
+      )[0];
+      return {
+        name: topSuspect.name,
+        percentage: topSuspect.percentage,
+      };
+    }
+    if (blame?.target_username) {
+      return {
+        name: blame.target_username,
+        percentage: 0, // Or responsibility from blame object if available
+      };
+    }
+    return null;
+  }, [storedSuspects, blame]);
 
   const addSticker = (emoji: string) => {
     const newSticker: Sticker = {
@@ -49,16 +95,16 @@ export default function ResultPage() {
   };
 
   const handleDownload = async () => {
+    if (!culprit) return;
+
     if (!contentRef.current) return;
 
-    // 스코프 외부에서 변수 선언
     const excludeElements = contentRef.current.querySelectorAll(
       '.exclude-from-capture'
     );
     const originalDisplays: string[] = [];
 
     try {
-      // 캡처 전에 제외할 요소들 숨기기
       excludeElements.forEach((element, index) => {
         originalDisplays[index] = (element as HTMLElement).style.display;
         (element as HTMLElement).style.display = 'none';
@@ -71,55 +117,68 @@ export default function ResultPage() {
       });
 
       const link = document.createElement('a');
-      link.download = `blame_result_${MOCK_DATA.culprit.name}.png`;
+      link.download = `blame_result_${culprit.name}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
       console.error('Download failed:', err);
       alert('이미지 저장에 실패했습니다.');
     } finally {
-      // 성공/실패 여부와 관계없이 원래 상태로 복원
       excludeElements.forEach((element, index) => {
         (element as HTMLElement).style.display = originalDisplays[index] || '';
       });
     }
   };
 
+  const [isSharing, setIsSharing] = useState(false);
+
   const handleShare = async () => {
-    const text = `[GitBlame 판결]\n프로젝트: ${MOCK_DATA.caseInfo.project}\n범인: ${MOCK_DATA.culprit.name}\n책임도: ${MOCK_DATA.culprit.percentage}%\n\n#GitBlame #개발자재판`;
+    const shareText =
+      verdictHeaderInfo && culprit
+        ? `[GitBlame 판결]\n프로젝트: ${verdictHeaderInfo.project}\n범인: ${culprit.name}\n책임도: ${culprit.percentage}%\n\n${blame?.messages.mild.join(' ') ?? ''}`
+        : '';
+
+    if (!shareText) {
+      alert('공유할 판결 정보를 불러오지 못했습니다.');
+      return;
+    }
+
+    if (isSharing) {
+      console.warn('Share already in progress, ignoring new request');
+      return;
+    }
 
     if (navigator.share) {
+      setIsSharing(true);
       try {
         await navigator.share({
           title: 'GitBlame 판결 결과',
-          text: text,
+          text: shareText,
           url: window.location.href,
         });
+        return;
       } catch (err) {
-        // 사용자가 공유를 취소한 경우 fallback하지 않음
         if (err instanceof Error && err.name === 'AbortError') {
-          console.log('Share cancelled by user');
+          setIsSharing(false);
           return;
         }
         console.error('Share failed:', err);
-        // 실제 에러인 경우에만 클립보드 fallback
-        await copyToClipboard(text);
+      } finally {
+        setIsSharing(false);
       }
-    } else {
-      await copyToClipboard(text);
     }
+
+    await copyToClipboard(shareText);
   };
 
   const copyToClipboard = async (text: string) => {
     try {
-      // 최신 Clipboard API 시도
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
         alert('결과가 클립보드에 복사되었습니다.');
         return;
       }
 
-      // Fallback: 가상 textarea 사용 (HTTP 환경 등)
       const textArea = document.createElement('textarea');
       textArea.value = text;
       textArea.style.position = 'fixed';
@@ -137,19 +196,53 @@ export default function ResultPage() {
     }
   };
 
+  const isLoading = isBlameLoading;
+
+  if (!judgmentId) {
+    return (
+      <PageContainer>
+        <MainContent ref={contentRef}>
+          <StatusMessage>judgmentId를 찾을 수 없습니다.</StatusMessage>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
+  if (isLoading || !storedCaseInfo) {
+    return (
+      <PageContainer>
+        <MainContent ref={contentRef}>
+          <StatusMessage>판결 결과를 불러오는 중입니다...</StatusMessage>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
+  if (blameError || !verdictHeaderInfo || !culprit) {
+    return (
+      <PageContainer>
+        <MainContent ref={contentRef}>
+          <StatusMessage>
+            판결 정보를 불러오지 못했습니다. 다시 시도해주세요.
+          </StatusMessage>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer>
       <MainContent ref={contentRef}>
         <BackgroundEffect />
 
         <VerdictHeader
-          {...MOCK_DATA.caseInfo}
+          {...verdictHeaderInfo}
           className="exclude-from-capture"
         />
 
         <CulpritDisplay
-          name={MOCK_DATA.culprit.name}
-          percentage={MOCK_DATA.culprit.percentage}
+          name={culprit.name}
+          percentage={culprit.percentage}
           stickers={stickers}
         />
 
@@ -218,4 +311,11 @@ const ActionButton = styled(Button)`
   ${font.H2}
   font-weight: 700;
   border-radius: 12px;
+`;
+
+const StatusMessage = styled.p`
+  ${font.H1}
+  color: ${color.white};
+  text-align: center;
+  width: 100%;
 `;

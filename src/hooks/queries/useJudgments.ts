@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   judgmentsApi,
   CreateJudgmentRequest,
-  CreateBlameRequest,
   JudgmentListParams,
 } from '@/service/api';
 
@@ -34,11 +33,14 @@ export const useJudgment = (judgmentId: string) => {
 };
 
 // 판결 결과 조회
-export const useBlame = (judgmentId: string) => {
+export const useBlame = (
+  judgmentId: string,
+  options?: { enabled?: boolean }
+) => {
   return useQuery({
     queryKey: JUDGMENT_KEYS.blame(judgmentId),
     queryFn: () => judgmentsApi.getBlame(judgmentId),
-    enabled: !!judgmentId,
+    enabled: options?.enabled !== undefined ? options.enabled : !!judgmentId,
     retry: false, // Blame이 아직 없을 수 있으므로 retry 안 함
   });
 };
@@ -90,13 +92,7 @@ export const useCreateBlame = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      judgmentId,
-      request,
-    }: {
-      judgmentId: string;
-      request: CreateBlameRequest;
-    }) => judgmentsApi.createBlame(judgmentId, request),
+    mutationFn: (judgmentId: string) => judgmentsApi.createBlame(judgmentId),
     onSuccess: (data) => {
       // 해당 판결의 Blame 정보 무효화
       queryClient.invalidateQueries({

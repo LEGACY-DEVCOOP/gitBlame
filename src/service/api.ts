@@ -56,6 +56,26 @@ export interface CommitParams {
   per_page?: number;
 }
 
+// File Tree Types
+export interface FileTreeItem {
+  path: string;
+  type: 'blob' | 'tree'; // blob = file, tree = directory
+  sha: string;
+  size: number | null;
+  url: string;
+}
+
+export interface FileTree {
+  sha: string;
+  url: string;
+  tree: FileTreeItem[];
+  truncated: boolean;
+}
+
+export interface FileTreeParams {
+  branch?: string;
+}
+
 // Judgments Types
 export interface Suspect {
   username: string;
@@ -91,14 +111,16 @@ export interface Blame {
   id: string;
   judgment_id: string;
   target_username: string;
-  message: string;
-  intensity: 'mild' | 'medium' | 'spicy';
+  target_avatar: string;
+  responsibility: number;
+  reason: string;
+  messages: {
+    mild: string[];
+    medium: string[];
+    spicy: string[];
+  };
   image_url?: string;
   created_at: string;
-}
-
-export interface CreateBlameRequest {
-  intensity: 'mild' | 'medium' | 'spicy';
 }
 
 export interface JudgmentListParams {
@@ -171,6 +193,18 @@ export const githubApi = {
     );
     return data.commits || [];
   },
+
+  getFileTree: async (
+    owner: string,
+    repo: string,
+    params?: FileTreeParams
+  ): Promise<FileTree> => {
+    const { data } = await apiClient.get<FileTree>(
+      `/github/repos/${owner}/${repo}/tree`,
+      { params }
+    );
+    return data;
+  },
 };
 
 // Judgments APIs
@@ -209,13 +243,10 @@ export const judgmentsApi = {
   },
 
   // 최종 판결 내리기 (Blame 생성)
-  createBlame: async (
-    judgmentId: string,
-    request: CreateBlameRequest
-  ): Promise<Blame> => {
+  createBlame: async (judgmentId: string): Promise<Blame> => {
     const { data } = await apiClient.post<Blame>(
       `/judgments/${judgmentId}/blame`,
-      request
+      {}
     );
     return data;
   },
