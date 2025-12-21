@@ -8,8 +8,9 @@ import Input from '@/components/common/Input/Input';
 import Select from '@/components/common/Select/Select';
 import FileSelector from './FileSelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useCreateJudgment } from '@/hooks/queries/useJudgments';
+
 const periodOptions = [
   { value: '1', label: '최근 24시간 이내' },
   { value: '3', label: '최근 3일 이내' },
@@ -27,10 +28,12 @@ export default function ComplaintForm() {
   const [isFileSelectorOpen, setIsFileSelectorOpen] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const params = useParams();
   const createJudgment = useCreateJudgment();
 
   // Get repo info from URL params
   const repoName = searchParams?.get('name') || '';
+  const repoIdFromParams = params?.id as string | undefined;
   const [owner, repo] = useMemo(() => {
     const parts = repoName.split('/');
     if (parts.length !== 2) {
@@ -63,8 +66,18 @@ export default function ComplaintForm() {
         period_days: parseInt(formData.period, 10),
       });
 
-      // Navigate to judgment detail page or summary page
-      router.push(`/judgment/${judgment.id}`);
+      // Navigate to court summary page
+      if (repoIdFromParams) {
+        router.push(
+          `/repo/${repoIdFromParams}/court/summary?judgmentId=${judgment.id}`
+        );
+      } else {
+        // If accessed from standalone /court page, still go to repo-specific summary
+        // We need to get the repo ID from the judgment response
+        // For now, redirect to main page with success message
+        alert('고소장이 성공적으로 접수되었습니다!');
+        router.push('/main');
+      }
     } catch (error) {
       console.error('Failed to create judgment:', error);
       alert('고소장 접수에 실패했습니다. 다시 시도해주세요.');

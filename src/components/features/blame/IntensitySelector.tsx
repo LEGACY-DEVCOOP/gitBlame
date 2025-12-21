@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import color from '@/styles/color';
 import font from '@/styles/font';
 
-export type Intensity = 'mild' | 'soft' | 'spicy';
+export type Intensity = 'mild' | 'medium' | 'spicy';
 
 interface IntensitySelectorProps {
   selected: Intensity;
@@ -18,7 +18,7 @@ const INTENSITIES: {
   color: string;
 }[] = [
   { id: 'mild', label: '순한맛', protocol: 'PHASE 01', color: '#4facfe' },
-  { id: 'soft', label: '중간', protocol: 'PHASE 02', color: '#f9d423' },
+  { id: 'medium', label: '중간', protocol: 'PHASE 02', color: '#f9d423' },
   { id: 'spicy', label: '매운맛', protocol: 'PHASE 03', color: color.primary },
 ];
 

@@ -7,10 +7,14 @@ import CaseSummaryInfo from '@/components/features/court/summary/CaseSummaryInfo
 import SuspectVerdictList from '@/components/features/court/summary/SuspectVerdictList';
 import ResponsibilityPieChart from '@/components/features/court/summary/ResponsibilityPieChart';
 import RelatedCommitTimeline from '@/components/features/court/summary/RelatedCommitTimeline';
-import { useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRef, useEffect, useMemo } from 'react';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Courthouse from '../../../../../../../public/assets/Courthouse';
 import { toPng } from 'html-to-image';
+import { useJudgment, useAnalyzeJudgment } from '@/hooks/queries/useJudgments';
+import { useCommits } from '@/hooks/queries/useGithub';
+import { useUser } from '@/hooks/queries/useAuth';
+import { useVerdictStore } from '@/store';
 
 const MOCK_DATA = {
   caseInfo: {
@@ -66,18 +70,107 @@ const MOCK_DATA = {
 
 export default function CourtSummaryPage() {
   const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
   const contentRef = useRef<HTMLDivElement>(null);
 
+  const repoId = params?.id as string;
+  const judgmentId = searchParams?.get('judgmentId');
+
+  // Fetch judgment data
+  const { data: judgment, isLoading, error } = useJudgment(judgmentId || '');
+  const analyzeJudgment = useAnalyzeJudgment();
+  const { data: user } = useUser();
+
+  // Parse owner/repo from judgment data
+  const [owner, repo] = useMemo(() => {
+    if (!judgment) return ['', ''];
+    const fullName = `${judgment.repo_owner}/${judgment.repo_name}`;
+    return [judgment.repo_owner, judgment.repo_name];
+  }, [judgment]);
+
+  // Fetch commits for the specific file
+  const { data: commits } = useCommits(owner, repo, {
+    path: judgment?.file_path,
+  });
+
+  // Auto-analyze if judgment is pending
+  useEffect(() => {
+    if (judgment && judgment.status === 'pending' && judgmentId) {
+      analyzeJudgment.mutate(judgmentId);
+    }
+  }, [judgment, judgmentId]);
+
+  // Transform judgment data to match component props
+  const caseInfo = useMemo(() => {
+    if (!judgment) return null;
+
+    const myUsername = user?.username;
+    const allSuspects = judgment.suspects?.map((s) => s.username) || [];
+
+    return {
+      title: judgment.title,
+      caseNumber: judgment.case_number,
+      date: new Date(judgment.created_at).toLocaleDateString('ko-KR'),
+      complainant: myUsername || 'You',
+      accused: allSuspects.filter((name) => name !== myUsername),
+      summary: judgment.description,
+    };
+  }, [judgment, user]);
+
+  const suspects = useMemo(() => {
+    if (!judgment?.suspects) return [];
+    return judgment.suspects.map((s) => ({
+      name: s.username,
+      role: '용의자',
+      description: s.reason,
+      percentage: s.responsibility,
+    }));
+  }, [judgment]);
+
+  const chartData = useMemo(() => {
+    if (!judgment?.suspects) return [];
+    const colors = ['#4facfe', '#f9d423', '#00f2fe', '#fa709a', '#30cfd0'];
+    return judgment.suspects.map((s, i) => ({
+      name: s.username,
+      value: s.responsibility,
+      color: colors[i % colors.length],
+    }));
+  }, [judgment]);
+
+  const commitsData = useMemo(() => {
+    if (!commits) return [];
+    return commits.slice(0, 10).map((c) => ({
+      author: c.author.username,
+      message: c.message,
+      timestamp: new Date(c.date).toLocaleDateString('ko-KR'),
+    }));
+  }, [commits]);
+
+  const setVerdict = useVerdictStore((state) => state.setVerdict);
+
+  // Save verdict info to global store whenever it's updated
+  useEffect(() => {
+    if (caseInfo && suspects.length > 0 && judgment) {
+      setVerdict({
+        caseInfo,
+        suspects,
+        repoFullName: `${judgment.repo_owner}/${judgment.repo_name}`,
+      });
+    }
+  }, [caseInfo, suspects, judgment, setVerdict]);
+
   const formatVerdictResult = () => {
-    const { caseInfo, suspects } = MOCK_DATA;
-    let result = `[법원 판결문 - ${caseInfo.caseNumber}]\n\n`;
-    result += `사건명: ${caseInfo.title}\n`;
-    result += `날짜: ${caseInfo.date}\n`;
-    result += `고소인: ${caseInfo.complainant}\n`;
-    result += `피고소인: ${caseInfo.accused.join(', ')}\n\n`;
-    result += `■ 고소요지\n${caseInfo.summary}\n\n`;
+    if (!caseInfo || !suspects) return '';
+    const data = { caseInfo, suspects };
+    let result = `[법원 판결문 - ${data.caseInfo.caseNumber}]\n\n`;
+    result += `사건명: ${data.caseInfo.title}\n`;
+    result += `날짜: ${data.caseInfo.date}\n`;
+    result += `고소인: ${data.caseInfo.complainant}\n`;
+    result += `피고소인: ${data.caseInfo.accused.join(', ')}\n\n`;
+    result += `■ 고소요지\n${data.caseInfo.summary}\n\n`;
     result += `■ 판결 결과\n`;
-    suspects.forEach((s) => {
+    data.suspects.forEach((s) => {
       result += `- ${s.name} (${s.role}): ${s.percentage}% 책임 (${s.description})\n`;
     });
     result += `\nGenerated by GitBlame`;
@@ -137,7 +230,7 @@ export default function CourtSummaryPage() {
         },
       });
       const link = document.createElement('a');
-      link.download = `verdict_${MOCK_DATA.caseInfo.caseNumber}.png`;
+      link.download = `verdict_${caseInfo?.caseNumber || 'unknown'}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -146,16 +239,37 @@ export default function CourtSummaryPage() {
     }
   };
 
-  const params = useParams();
-  const id = params?.id;
-
   const handleGoBlame = () => {
-    if (!id) {
-      console.error('Repository ID is missing');
+    if (!repoId || !judgmentId) {
+      console.error('Repository ID or Judgment ID is missing');
       return;
     }
-    router.push(`/repo/${id}/court/blame`);
+    router.push(`/repo/${repoId}/court/blame?judgmentId=${judgmentId}`);
   };
+
+  if (isLoading || analyzeJudgment.isPending) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <LoadingMessage>
+            {analyzeJudgment.isPending
+              ? 'AI가 용의자를 분석하는 중...'
+              : '판결 정보를 불러오는 중...'}
+          </LoadingMessage>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
+  if (error || !judgment || !caseInfo) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <ErrorMessage>판결 정보를 불러오는데 실패했습니다.</ErrorMessage>
+        </MainContent>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -174,14 +288,14 @@ export default function CourtSummaryPage() {
           ref={contentRef}
           style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}
         >
-          <CaseSummaryInfo {...MOCK_DATA.caseInfo} />
+          <CaseSummaryInfo {...caseInfo} />
 
-          <SuspectVerdictList suspects={MOCK_DATA.suspects} />
+          <SuspectVerdictList suspects={suspects} />
 
-          <ResponsibilityPieChart data={MOCK_DATA.chartData} />
+          <ResponsibilityPieChart data={chartData} />
         </div>
 
-        <RelatedCommitTimeline commits={MOCK_DATA.commits} />
+        <RelatedCommitTimeline commits={commitsData} />
 
         <ButtonGroup>
           <BlameButton onClick={handleGoBlame}>🚀 BLAME 하기</BlameButton>
@@ -318,4 +432,18 @@ const DownloadButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   }
+`;
+
+const LoadingMessage = styled.div`
+  ${font.D1}
+  color: ${color.white};
+  text-align: center;
+  padding: 100px 20px;
+`;
+
+const ErrorMessage = styled.div`
+  ${font.H1}
+  color: ${color.primary};
+  text-align: center;
+  padding: 100px 20px;
 `;

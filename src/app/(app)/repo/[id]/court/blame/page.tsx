@@ -1,7 +1,7 @@
 'use client';
 
 import styled from '@emotion/styled';
-import { useState, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import color from '@/styles/color';
 import font from '@/styles/font';
 import SuspectCard from '@/components/features/blame/SuspectCard';
@@ -10,35 +10,120 @@ import IntensitySelector, {
   Intensity,
 } from '@/components/features/blame/IntensitySelector';
 import Button from '@/components/common/Button/Button';
-import { useRouter, useParams } from 'next/navigation';
-
-const MOCK_SUSPECT = {
-  name: 'craftmanship',
-  percentage: 66,
-  date: '1월 14일',
-  commitMsg: '결제 로직 수정',
-  file: 'payment.ts',
-  line: 32,
-};
-
-const BLAME_MESSAGES: Record<Intensity, string> = {
-  mild: `${MOCK_SUSPECT.name}님, ${MOCK_SUSPECT.date} 커밋하신 '${MOCK_SUSPECT.commitMsg}'에서 에러가 발생했습니다.\n${MOCK_SUSPECT.file} 파일 ${MOCK_SUSPECT.line}번째 줄 확인 부탁드립니다.\n커피 한 잔 사주세요 ☕️`,
-  soft: `${MOCK_SUSPECT.name}님, 이거 왜 이렇게 하신 거예요?\n${MOCK_SUSPECT.file} 파일 ${MOCK_SUSPECT.line}줄 때문에 다 터졌잖아요... 🤦‍♀️\n빨리 수정해주시죠.`,
-  spicy: `야 이거 누가 짠 거야 (본인 등장)\n${MOCK_SUSPECT.name}님, 당신의 '${MOCK_SUSPECT.commitMsg}' 커밋이 우리 서버를 죽였습니다.\n${MOCK_SUSPECT.file}:${MOCK_SUSPECT.line} 당장 고쳐놓으세요. 죽고 싶지 않으면. 👿`,
-};
+import {
+  useBlame,
+  useCreateBlame,
+  useCreateBlameImage,
+  useJudgment,
+} from '@/hooks/queries/useJudgments';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useUser } from '@/hooks/queries/useAuth';
 
 export default function BlamePage() {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id;
+  const searchParams = useSearchParams();
+  const repoId = params?.id as string;
+  const judgmentId = searchParams?.get('judgmentId') || '';
   const [intensity, setIntensity] = useState<Intensity>('mild');
+  const [message, setMessage] = useState('');
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const currentMessage = BLAME_MESSAGES[intensity];
+  const {
+    data: judgment,
+    isLoading: isJudgmentLoading,
+    error: judgmentError,
+  } = useJudgment(judgmentId);
+
+  // Don't fetch blame initially - we'll create it first
+  const {
+    data: blame,
+    isLoading: isBlameLoading,
+    error: blameError,
+  } = useBlame(judgmentId, { enabled: false });
+
+  const createBlame = useCreateBlame();
+  const createBlameImage = useCreateBlameImage();
+  const [blameData, setBlameData] = useState<typeof blame | null>(null);
+  const { data: user } = useUser();
+
+  const topSuspect = useMemo(() => {
+    if (!judgment?.suspects || judgment.suspects.length === 0) return null;
+    return [...judgment.suspects].sort(
+      (a, b) => b.responsibility - a.responsibility
+    )[0];
+  }, [judgment]);
+
+  // Auto-create blame when judgment is loaded
+  useEffect(() => {
+    const autoCreateBlame = async () => {
+      if (!judgment || !judgmentId || blameData || createBlame.isPending) {
+        return;
+      }
+
+      try {
+        const created = await createBlame.mutateAsync(judgmentId);
+        setBlameData(created);
+      } catch (err) {
+        console.error('Auto-create blame failed:', err);
+      }
+    };
+
+    autoCreateBlame();
+  }, [judgment, judgmentId]);
+
+  // Update message when intensity changes
+  useEffect(() => {
+    const currentBlame = blameData || blame;
+    if (currentBlame?.messages) {
+      const messagesForIntensity = currentBlame.messages[intensity];
+      if (messagesForIntensity && messagesForIntensity.length > 0) {
+        const rawMessage = messagesForIntensity.join('\n');
+        const myUsername = user?.username;
+
+        if (!myUsername) {
+          setMessage(rawMessage); // If user data isn't loaded, show original message
+          return;
+        }
+
+        const lines = rawMessage.split('\n');
+        const modifiedLines = lines.map((line) => {
+          if (line.trim().startsWith('고소인:')) {
+            return line.replace('You', myUsername);
+          }
+          if (line.trim().startsWith('피고소인:')) {
+            const parts = line.split(':');
+            const accusedList = parts[1]
+              .trim()
+              .split(',')
+              .map((s) => s.trim());
+            const filteredAccused = accusedList.filter(
+              (name) => name !== myUsername
+            );
+            return `${parts[0]}: ${filteredAccused.join(', ')}`;
+          }
+          return line;
+        });
+
+        setMessage(modifiedLines.join('\n'));
+      }
+    }
+  }, [blameData, blame, intensity, user]);
+
+  const displayedMessage =
+    message ||
+    (topSuspect
+      ? `${topSuspect.username}님에 대한 BLAME 메시지를 생성하고 있습니다...`
+      : '사건 정보를 불러오고 있습니다...');
 
   const handleCopy = async () => {
+    if (!message) {
+      alert('먼저 BLAME 메시지를 생성해주세요.');
+      return;
+    }
+
     try {
-      await navigator.clipboard.writeText(currentMessage);
+      await navigator.clipboard.writeText(message);
       alert('메시지가 클립보드에 복사되었습니다.');
     } catch (err) {
       console.error('Copy failed:', err);
@@ -46,13 +131,77 @@ export default function BlamePage() {
     }
   };
 
-  const handleNextStep = () => {
-    if (!id) {
-      console.error('Repository ID is missing');
+  const handleNextStep = async () => {
+    if (!repoId || !judgmentId) {
+      alert('필수 정보가 없습니다. 다시 시도해주세요.');
       return;
     }
-    router.push(`/repo/${id}/court/result`);
+
+    const currentBlame = blameData || blame;
+    if (!currentBlame) {
+      alert('BLAME 데이터가 없습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    try {
+      let imageUrl = currentBlame.image_url;
+      if (!imageUrl) {
+        const imageResult = await createBlameImage.mutateAsync(judgmentId);
+        imageUrl = imageResult.image_url;
+      }
+
+      const query = new URLSearchParams({
+        judgmentId,
+        intensity,
+      });
+      if (imageUrl) {
+        query.set('imageUrl', imageUrl);
+      }
+
+      router.push(`/repo/${repoId}/court/result?${query.toString()}`);
+    } catch (err) {
+      console.error('Blame image generation failed:', err);
+      alert('이미지 생성에 실패했습니다. 다시 시도해주세요.');
+    }
   };
+
+  const isLoading =
+    isJudgmentLoading ||
+    isBlameLoading ||
+    createBlame.isPending ||
+    createBlameImage.isPending;
+
+  if (!judgmentId) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <Subtitle>judgmentId를 찾을 수 없습니다. 다시 시도해주세요.</Subtitle>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <Subtitle>데이터를 불러오는 중입니다...</Subtitle>
+        </MainContent>
+      </PageContainer>
+    );
+  }
+
+  if (judgmentError || blameError || !judgment) {
+    return (
+      <PageContainer>
+        <MainContent>
+          <Subtitle>
+            BLAME 정보를 불러오지 못했습니다. 다시 시도해주세요.
+          </Subtitle>
+        </MainContent>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -66,13 +215,13 @@ export default function BlamePage() {
 
         <ContentGrid ref={contentRef}>
           <SuspectCard
-            name={MOCK_SUSPECT.name}
-            percentage={MOCK_SUSPECT.percentage}
-            isPrimary={true}
+            name={topSuspect?.username || '용의자 없음'}
+            percentage={topSuspect?.responsibility || 0}
+            isPrimary
           />
 
           <MessageControlGroup>
-            <BlameMessageArea message={currentMessage} />
+            <BlameMessageArea message={displayedMessage} />
             <IntensitySelector selected={intensity} onChange={setIntensity} />
           </MessageControlGroup>
 
@@ -80,7 +229,12 @@ export default function BlamePage() {
             <ActionButton variant="ghost" fullWidth onClick={handleCopy}>
               복사하기
             </ActionButton>
-            <ActionButton variant="primary" fullWidth onClick={handleNextStep}>
+            <ActionButton
+              variant="primary"
+              fullWidth
+              onClick={handleNextStep}
+              disabled={createBlame.isPending || createBlameImage.isPending}
+            >
               이미지 생성
             </ActionButton>
           </ActionSection>
@@ -129,7 +283,7 @@ const Subtitle = styled.p`
   ${font.p1}
   color: ${color.midgray};
   max-width: 500px;
-  white-space: nowrap;
+  white-space: normal;
 `;
 
 const ContentGrid = styled.div`
