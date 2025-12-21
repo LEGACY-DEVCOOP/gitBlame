@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import styled from '@emotion/styled';
+import { usePathname } from 'next/navigation';
 import GlobalStyle from '@/styles/global';
 import Header from '@/components/common/Header/Header';
 import AuthInitializer from '@/components/common/AuthInitializer/AuthInitializer';
@@ -11,16 +12,21 @@ interface LayoutClientProps {
 }
 
 const LayoutClient = ({ children }: LayoutClientProps) => {
+  const pathname = usePathname();
+  const isLandingPage = pathname === '/';
+
   return (
     <>
       <GlobalStyle />
       <AuthInitializer />
       <Body>
-        <Suspense
-          fallback={<div style={{ height: '88px', background: '#000' }} />}
-        >
-          <Header />
-        </Suspense>
+        {!isLandingPage && (
+          <Suspense
+            fallback={<div style={{ height: '88px', background: '#000' }} />}
+          >
+            <Header />
+          </Suspense>
+        )}
         <Main>{children}</Main>
       </Body>
     </>
